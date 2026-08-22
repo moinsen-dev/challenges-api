@@ -33,6 +33,8 @@ and collector apps use the same machine.
 
 **The code is CC0** — public domain as far as law allows. Take it, change it,
 sell it, run it yourself. The hosted service is billed by usage, never per user.
+The source lives at
+[github.com/moinsen-dev/challenges-api](https://github.com/moinsen-dev/challenges-api).
 
 **Live:** the API runs at `https://games-challenges-api.developer-331.workers.dev`
 (and `https://challenges-api.moinsen.dev`), the site at
