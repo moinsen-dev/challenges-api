@@ -12,7 +12,16 @@ npm run dev       # local worker on :8799
 ```
 
 `npm test` resets a local D1, applies the migrations, boots a real worker and
-runs both suites. If it is green on your machine it is green in CI.
+runs every suite against it. If it is green on your machine it is green in CI.
+
+It needs nothing from you first: a missing `.dev.vars` is created from
+`.dev.vars.example`, whose values are development placeholders and belong on no
+deployed instance. Real secrets are set with `wrangler secret put NAME` and are
+deliberately absent from `wrangler.jsonc`, because a plain-text var of the same
+name wins over a secret on every deploy.
+
+The worker binds port 8799. If something else on your machine holds it, pass
+another: `PORT=8822 npm test`.
 
 ## The rules this codebase lives by
 

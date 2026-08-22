@@ -1,0 +1,26 @@
+# Local development secrets. Copy to `.dev.vars`, which is gitignored:
+#
+#   cp .dev.vars.example .dev.vars
+#
+# `scripts/test.sh` does this for you if the file is missing, so a fresh clone
+# runs `npm test` green without any setup.
+#
+# Every value here is a development placeholder and must never be used on a
+# deployed instance. Real values are set with `wrangler secret put NAME`, and
+# deliberately not in `wrangler.jsonc` — a plain-text var of the same name wins
+# over a secret on every deploy.
+
+# The operator key. Guards app creation, regions, seasons, moderation and
+# retention. The smoke test assumes exactly this value when ADMIN_KEY is unset
+# in its own environment.
+ADMIN_KEY="dev-admin-key"
+
+# Sign-in with GitHub. Unset means the endpoint answers 501 rather than
+# pretending; sign-in is not needed for the test suite.
+# GITHUB_CLIENT_ID=""
+# GITHUB_CLIENT_SECRET=""
+# GITHUB_CALLBACK_URL="http://127.0.0.1:8799/v1/dev/auth/github/callback"
+
+# Magic-link sign-in by email. Same rule: unset means 501, not a silent no-op.
+# RESEND_API_KEY=""
+# MAIL_FROM="Challenges API <noreply@example.com>"
