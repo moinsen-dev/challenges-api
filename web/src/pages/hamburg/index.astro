@@ -1,0 +1,88 @@
+---
+import Base from '../../layouts/Base.astro'
+import { API, SANDBOX_KEY } from '../../instance'
+---
+<Base title="Hamburg first — Challenges API">
+  <section class="section first">
+    <div class="wrap narrow">
+      <p class="eyebrow">The rollout</p>
+      <h1 style="font-size: clamp(2.2rem, 5vw, 3.2rem);">Hamburg first, and only then anywhere else.</h1>
+      <p class="lead">
+        A global ranking needs millions of players to be interesting. A district
+        ranking needs eleven. What is scarce here is density in one place, not
+        reach — so the ladder opens one city at a time.
+      </p>
+      <p>
+        Seven districts are live. A region that is not open yet carries a
+        threshold: once enough people are waiting for it, it opens itself and
+        everybody waiting is told. Scarcity is code here, not marketing.
+      </p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap narrow">
+      <h2>Open districts</h2>
+      <div class="ladder" id="open"></div>
+
+      <h2>Waiting to open</h2>
+      <p class="kicker" style="margin-bottom: 16px;">
+        Ordered by how many people are waiting. Nothing here opens on a decision
+        by us.
+      </p>
+      <div class="ladder" id="waiting"><p class="muted">Asking…</p></div>
+
+      <h2>Why a district and not a city</h2>
+      <p>
+        A title is only worth something if it was hard to get and somebody else
+        wanted it. A region here awards a title only once it has had enough
+        contenders <em>and</em> produced a unique winner — and every leaderboard
+        says honestly whether it can crown anybody at all.
+      </p>
+      <p class="small muted">
+        Nothing finer than a district is ever stored: no coordinates, no
+        address, no IP as truth. A home district is locked for the season, so
+        nobody can move to whichever district happens to be emptiest.
+      </p>
+    </div>
+  </section>
+
+  <script is:inline define:vars={{ API, SANDBOX_KEY }}>
+    const esc = (v) => String(v ?? '').replace(/[<>&]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' })[c])
+    const LEVELS = ['district', 'city', 'state', 'country', 'continent', 'world']
+    const ask = (path) => fetch(API + path, { headers: { 'X-App-Key': SANDBOX_KEY } }).then((r) => r.json())
+
+    ;(async () => {
+      const openBox = document.getElementById('open')
+      const waitingBox = document.getElementById('waiting')
+      try {
+        const [catalog, waitlist] = await Promise.all([ask('/v1/catalog'), ask('/v1/waitlist')])
+
+        const districts = (catalog.regions ?? []).filter((r) => r.level === 1)
+        openBox.innerHTML = districts.length
+          ? districts
+              .map(
+                (r) =>
+                  `<div class="rung"><span class="level">DISTRICT</span>` +
+                  `<span class="name">${esc(r.name)}</span><span class="pill gold">open</span></div>`,
+              )
+              .join('')
+          : '<p class="muted">No district is open yet.</p>'
+
+        waitingBox.innerHTML = (waitlist.regions ?? []).length
+          ? waitlist.regions
+              .map(
+                (r) =>
+                  `<div class="rung locked"><span class="level">${esc((LEVELS[r.level - 1] ?? 'region').toUpperCase())}</span>` +
+                  `<span class="name">${esc(r.name)}</span>` +
+                  `<span class="pill">${r.waiting} waiting · ${r.missing} to go</span></div>`,
+              )
+              .join('')
+          : '<p class="muted">Nothing is queued to open yet. A closed region appears here as soon as somebody waits for it.</p>'
+      } catch (error) {
+        openBox.innerHTML = `<p class="muted">Could not reach the instance: ${esc(error.message)}</p>`
+        waitingBox.innerHTML = ''
+      }
+    })()
+  </script>
+</Base>

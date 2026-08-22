@@ -1,0 +1,266 @@
+---
+import Base from '../../layouts/Base.astro'
+---
+<Base title="Dashboard — Challenges API">
+  <section class="wrap" style="padding-top: 48px;">
+    <h1 style="font-size: 1.8rem;">Dashboard</h1>
+    <p class="muted" style="max-width: 62ch;">
+      Operational view across every app. The admin key stays in your browser
+      (<code>localStorage</code>) and is sent only to the API you enter —
+      defensible for a single operator, not for a customer portal.
+    </p>
+
+    <div class="card" style="margin-top: 20px;">
+      <div class="grid g2" style="grid-template-columns: 2fr 2fr auto; align-items: end;">
+        <div>
+          <label for="base">API</label>
+          <input id="base" placeholder="http://127.0.0.1:8799" />
+        </div>
+        <div>
+          <label for="key">Admin key</label>
+          <input id="key" type="password" placeholder="dev-admin-key" />
+        </div>
+        <div>
+          <button class="btn primary" id="load">Load</button>
+        </div>
+      </div>
+      <p id="err" class="muted" style="margin-top: 12px; display: none; color: var(--bad);"></p>
+    </div>
+
+    <div id="content" style="display: none;">
+      <h2>Apps</h2>
+      <div class="grid g3" id="totals"></div>
+      <div class="scroll" style="margin-top: 16px;">
+        <table>
+          <thead>
+            <tr><th>App</th><th class="num">Disciplines</th><th class="num">Players</th><th class="num">Entries</th><th></th></tr>
+          </thead>
+          <tbody id="apps"></tbody>
+        </table>
+      </div>
+
+      <div id="detail" style="display: none;">
+        <h2 id="detailTitle"></h2>
+        <div class="scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Discipline</th><th>Aggregation</th><th>Trust</th>
+                <th class="num">Exam</th><th class="num">Qualified</th>
+                <th class="num">Players</th><th class="num">Entries</th>
+              </tr>
+            </thead>
+            <tbody id="disciplines"></tbody>
+          </table>
+        </div>
+
+        <h3>Activity, recent days</h3>
+        <div id="activity" class="card" style="display: flex; align-items: flex-end; justify-content: flex-start; gap: 5px; height: 120px; padding: 14px 16px;"></div>
+
+        <h3>Held for review</h3>
+        <div class="scroll"><table>
+          <thead><tr><th>Player</th><th>Discipline</th><th class="num">Value</th><th></th></tr></thead>
+          <tbody id="flagged"></tbody>
+        </table></div>
+      </div>
+
+      <h2>Regional density</h2>
+      <div style="max-width: 320px; margin-bottom: 12px;">
+        <label for="season">Season</label>
+        <select id="season"></select>
+      </div>
+      <p class="muted" style="margin-top: -8px; font-size: 0.9rem;">
+        A district below the minimum contenders awards no title. This is the number the whole ladder hangs on.
+      </p>
+      <div class="scroll"><table>
+        <thead><tr><th>Region</th><th>Level</th><th class="num">Players</th></tr></thead>
+        <tbody id="regions"></tbody>
+      </table></div>
+
+      <h2>Season close <span class="pill">dry run</span></h2>
+      <p class="muted" style="margin-top: -8px; font-size: 0.9rem;">
+        Shows which titles would fall due on an immediate close — and which region goes empty, and why. Awards nothing.
+      </p>
+      <button class="btn" id="preview">Preview titles</button>
+      <div id="titles" style="margin-top: 16px;"></div>
+
+      <h2>Events</h2>
+      <div class="scroll"><table>
+        <thead><tr><th>Time</th><th>App</th><th>Player</th><th>Event</th><th></th></tr></thead>
+        <tbody id="events"></tbody>
+      </table></div>
+    </div>
+  </section>
+
+  <script is:inline>
+    const $ = (id) => document.getElementById(id)
+    const store = window.localStorage
+    $('base').value = store.getItem('dash.base') ?? 'http://127.0.0.1:8799'
+    $('key').value = store.getItem('dash.key') ?? ''
+
+    const esc = (v) => String(v ?? '').replace(/[<>&]/g, (ch) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' })[ch])
+    const num = (v) => (v ?? 0).toLocaleString('de-DE')
+
+    async function api(path, options = {}) {
+      const res = await fetch($('base').value.replace(/\/$/, '') + path, {
+        ...options,
+        headers: { 'Content-Type': 'application/json', 'X-Admin-Key': $('key').value },
+      })
+      const json = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(json.error ?? res.statusText)
+      return json
+    }
+
+    function fail(message) {
+      $('err').textContent = message
+      $('err').style.display = 'block'
+    }
+
+    async function load() {
+      $('err').style.display = 'none'
+      store.setItem('dash.base', $('base').value)
+      store.setItem('dash.key', $('key').value)
+      try {
+        const [{ apps }, { seasons }, { events }] = await Promise.all([
+          api('/v1/admin/apps'),
+          api('/v1/admin/seasons'),
+          api('/v1/admin/events'),
+        ])
+        const chosen = $('season').value || seasons.find((x) => x.status === 'open')?.id || seasons[0]?.id
+        $('season').innerHTML = seasons
+          .map((x) => `<option value="${esc(x.id)}"${x.id === chosen ? ' selected' : ''}>
+             ${esc(x.name)} · ${x.status === 'open' ? 'open' : 'closed'} ·
+             ${num(x.entries)} entries · ${num(x.titles)} titles</option>`)
+          .join('')
+        $('content').style.display = 'block'
+
+        const sum = (field) => apps.reduce((acc, a) => acc + a[field], 0)
+        $('totals').innerHTML = [
+          ['Apps', apps.length],
+          ['Players', sum('players')],
+          ['Entries', sum('entries')],
+        ]
+          .map(([label, value]) => `<div class="card"><p>${label}</p>
+            <div style="font-size:1.9rem;font-family:var(--mono);color:var(--gold)">${num(value)}</div></div>`)
+          .join('')
+
+        $('apps').innerHTML = apps
+          .map((a) => `<tr>
+            <td><strong>${esc(a.name)}</strong><br><span class="mono muted" style="font-size:0.8rem">${esc(a.slug)}</span></td>
+            <td class="num">${num(a.disciplines)}</td>
+            <td class="num">${num(a.players)}</td>
+            <td class="num">${num(a.entries)}</td>
+            <td class="right"><button class="btn" data-app="${esc(a.slug)}">open</button></td>
+          </tr>`)
+          .join('')
+        document.querySelectorAll('[data-app]').forEach((btn) =>
+          btn.addEventListener('click', () => openApp(btn.dataset.app)),
+        )
+
+        const density = await api('/v1/admin/regions/density?season=' + encodeURIComponent(chosen))
+        $('regions').innerHTML = density.regions
+          .map((r) => `<tr><td>${esc(r.name)}</td><td class="muted">${r.level}</td>
+            <td class="num" style="color:${r.players ? 'var(--text)' : 'var(--muted)'}">${num(r.players)}</td></tr>`)
+          .join('')
+
+        $('events').innerHTML = events
+          .map((e) => `<tr>
+            <td class="mono muted" style="font-size:0.8rem">${esc(e.created_at.slice(5, 16).replace('T', ' '))}</td>
+            <td class="muted">${esc(e.app ?? '—')}</td>
+            <td>${esc(e.handle ?? '—')}</td>
+            <td><span class="pill ${e.type.startsWith('title') ? 'gold' : ''}">${esc(e.type)}</span></td>
+            <td class="muted mono" style="font-size:0.78rem">${esc(JSON.stringify(e.payload).slice(0, 60))}</td>
+          </tr>`)
+          .join('')
+        if (apps.length) openApp(apps[0].slug)
+      } catch (error) {
+        fail(error.message)
+      }
+    }
+
+    async function openApp(slug) {
+      try {
+        const data = await api('/v1/admin/apps/' + slug)
+        $('detail').style.display = 'block'
+        $('detailTitle').textContent = data.app.name
+        $('disciplines').innerHTML = data.disciplines
+          .map((d) => `<tr>
+            <td><strong>${esc(d.name)}</strong><br><span class="mono muted" style="font-size:0.8rem">${esc(d.slug)}</span></td>
+            <td class="muted">${esc(d.aggregation)}${d.unit ? ' · ' + esc(d.unit) : ''}</td>
+            <td><span class="pill t${d.trust_tier}">T${d.trust_tier}</span>
+              <span class="muted" style="font-size:0.8rem">up to level ${d.max_title_level}</span></td>
+            <td class="num">${d.qualifying_score ?? '—'}</td>
+            <td class="num">${num(d.qualified)}</td>
+            <td class="num">${num(d.players)}</td>
+            <td class="num">${num(d.entries)}</td>
+          </tr>`)
+          .join('')
+
+        const days = data.activity.slice().reverse()
+        const peak = Math.max(1, ...days.map((d) => d.entries))
+        $('activity').innerHTML = days.length
+          ? days
+              .map((d) => `<div title="${esc(d.day)}: ${d.entries} entries, ${d.players} players"
+                style="flex:0 0 16px;height:${Math.max(4, Math.round((d.entries / peak) * 100))}%;
+                background:linear-gradient(180deg,var(--gold),var(--gold-dim));border-radius:3px 3px 0 0"></div>`)
+              .join('')
+          : '<span class="muted">no entries yet</span>'
+
+        $('flagged').innerHTML = data.flagged.length
+          ? data.flagged
+              .map((f) => `<tr>
+                <td>${esc(f.handle)}</td><td class="muted">${esc(f.discipline)}</td>
+                <td class="num">${num(f.value)}</td>
+                <td class="right">
+                  <button class="btn" data-entry="${esc(f.id)}" data-decision="counted">accept</button>
+                  <button class="btn" data-entry="${esc(f.id)}" data-decision="rejected">reject</button>
+                </td></tr>`)
+              .join('')
+          : '<tr><td colspan="4" class="muted">nothing under review</td></tr>'
+        document.querySelectorAll('[data-entry]').forEach((btn) =>
+          btn.addEventListener('click', async () => {
+            await api('/v1/admin/entries/' + btn.dataset.entry + '/review', {
+              method: 'POST',
+              body: JSON.stringify({ decision: btn.dataset.decision }),
+            })
+            openApp(slug)
+          }),
+        )
+      } catch (error) {
+        fail(error.message)
+      }
+    }
+
+    $('preview').addEventListener('click', async () => {
+      try {
+        const chosen = $('season').value
+        if (!chosen) return fail('no season selected')
+        const report = await api(`/v1/admin/seasons/${chosen}/close?dry_run=1`, { method: 'POST' })
+        $('titles').innerHTML = `
+          <div class="grid g2">
+            <div class="card"><h3>Titles due (${report.awarded.length})</h3>
+              ${report.awarded.length
+                ? report.awarded.map((a) => `<div style="border-top:1px solid var(--line);padding:8px 0">
+                    <span class="pill gold">level ${a.level}</span> <strong>${esc(a.handle)}</strong>
+                    <div class="muted" style="font-size:0.86rem">${esc(a.discipline)} · ${esc(a.region)} ·
+                    ${num(a.value)} · ${a.contenders} contenders</div></div>`).join('')
+                : '<p>none</p>'}
+            </div>
+            <div class="card"><h3>Going empty (${report.skipped.length})</h3>
+              ${report.skipped.length
+                ? report.skipped.slice(0, 20).map((skipped) => `<div style="border-top:1px solid var(--line);padding:8px 0">
+                    <strong>${esc(skipped.region)}</strong> <span class="muted">· ${esc(skipped.discipline)}</span>
+                    <div class="muted" style="font-size:0.86rem">${esc(skipped.reason)}</div></div>`).join('')
+                : '<p>none</p>'}
+            </div>
+          </div>`
+      } catch (error) {
+        fail(error.message)
+      }
+    })
+
+    $('load').addEventListener('click', load)
+    $('season').addEventListener('change', load)
+    if (store.getItem('dash.key')) load()
+  </script>
+</Base>

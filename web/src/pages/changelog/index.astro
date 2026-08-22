@@ -1,0 +1,143 @@
+---
+import Base from '../../layouts/Base.astro'
+
+const entries = [
+  {
+    phase: 'Phase 8',
+    title: 'Community surface',
+    lines: [
+      'OpenAPI 3.1 at /v1/openapi.json, 124 operations, generated from a catalogue a test compares against the router in both directions.',
+      'A console in the docs that runs against a sandbox app on this instance: account, district, entry, board, your own rank, deletion.',
+      'This changelog, a status page that asks the running service rather than a dashboard, and a Hamburg page.',
+    ],
+    fixed: null,
+  },
+  {
+    phase: 'Phase 7',
+    title: 'Ceremony',
+    lines: [
+      'Single-elimination tournaments, seeded from the standings rather than the sign-up order, with byes to the top seeds.',
+      'Ghosts: the runs at the top of a board, with the input trace each was made of.',
+      'A title archive and a shareable SVG card per title, public so it can be embedded anywhere.',
+    ],
+    fixed: 'rank() gave a player a rank on a board they were not on, which once handed a regional top seed to somebody from another district.',
+  },
+  {
+    phase: 'Phase 6',
+    title: 'Replay verification',
+    lines: [
+      'Developers upload the deterministic core of their simulation as a WASM module. A module that imports anything is refused, which makes determinism checkable rather than hopeful.',
+      'Runs are held until re-simulated from their trace; only agreement counts.',
+      'Metered in CPU milliseconds, because that is the real cost.',
+    ],
+    fixed: null,
+  },
+  {
+    phase: 'Phase 5',
+    title: 'Live',
+    lines: [
+      'SSE on the event stream, resumable from Last-Event-ID.',
+      'Presence: a count of everyone, names only for your own rivals.',
+      'Matchmaking that never hands the same player to two matches.',
+      'Join tickets a match server verifies offline, and signed webhooks with retries.',
+    ],
+    fixed: null,
+  },
+  {
+    phase: 'Phase 4',
+    title: 'A read path that scales',
+    lines: [
+      'Materialised standings: rank by counting who is ahead rather than by sorting the board.',
+      'At 20,000 players, rank 19,997 answers as fast as rank 4.',
+      'Cursor paging, and a neighbourhood endpoint for what a game actually shows.',
+    ],
+    fixed: 'A held entry that was later accepted never triggered the exam, so a player whose only run went through review could never appear on a board.',
+  },
+  {
+    phase: 'Phase 3',
+    title: 'Recovery',
+    lines: [
+      'Passkeys with real signature verification: ceremony type, challenge, origin, RP id hash, user presence, the signature, and the clone-detecting counter.',
+      'Sessions a player can see, and end all the others from the device still in their hand.',
+      'An optional rescue address. Unconfirmed addresses recover nothing.',
+    ],
+    fixed: null,
+  },
+  {
+    phase: 'Phase 2',
+    title: 'Clients',
+    lines: [
+      'JavaScript/TypeScript, Godot 4 and Dart/Flutter clients, each tested end to end against a real instance.',
+      'A drop-in leaderboard that needs one script tag and no build step.',
+      'All four refuse a secret key outright.',
+    ],
+    fixed: null,
+  },
+  {
+    phase: 'Phase 1b',
+    title: 'Keys and sign-in',
+    lines: [
+      'Sign in with GitHub or an emailed link.',
+      'API keys as objects: rotation without a gap, expiry, revocation, last use — and a refusal to revoke the last live key of a kind.',
+      'An allowlist checked against verified addresses only.',
+    ],
+    fixed: null,
+  },
+  {
+    phase: 'Phase 1',
+    title: 'Online',
+    lines: [
+      'Deployed: D1 in the EU, custom domains, a daily retention cron.',
+    ],
+    fixed: 'A plain-text var in the deploy config silently replaced the real admin key with a development placeholder. The live smoke test caught it within a minute.',
+  },
+]
+---
+<Base title="Changelog — Challenges API">
+  <section class="section first">
+    <div class="wrap narrow">
+      <p class="eyebrow">Changelog</p>
+      <h1 style="font-size: clamp(2.2rem, 5vw, 3.2rem);">What changed, and what broke.</h1>
+      <p class="lead">
+        Including the things that were wrong. A changelog that only lists
+        features is a marketing page with dates on it.
+      </p>
+      <p class="kicker">
+        Everything below landed on 22 August 2026, which is why it reads as
+        phases rather than as releases. The API is <code>/v1</code> throughout
+        and no published endpoint has changed shape.
+      </p>
+    </div>
+  </section>
+
+  {entries.map((entry) => (
+    <section class="section">
+      <div class="wrap narrow">
+        <p class="eyebrow">{entry.phase}</p>
+        <h2>{entry.title}</h2>
+        <ul class="ticks" style="columns: 1;">
+          {entry.lines.map((line) => <li>{line}</li>)}
+        </ul>
+        {entry.fixed ? (
+          <div class="card" style="margin-top: 18px;">
+            <h3 style="color: var(--gold)">Fixed</h3>
+            <p>{entry.fixed}</p>
+          </div>
+        ) : null}
+      </div>
+    </section>
+  ))}
+
+  <section class="section">
+    <div class="wrap narrow">
+      <p class="eyebrow">Before that</p>
+      <h2>The competition layer itself</h2>
+      <p>
+        Identity across apps, four aggregations, qualifications, regional
+        leaderboards, challenges, Glicko-2, geographic titles, badges,
+        collections, daily seeds, profiles, rivals, blocks, moderation, invites,
+        self-opening waitlists, GDPR export and deletion, retention limits.
+      </p>
+    </div>
+  </section>
+</Base>

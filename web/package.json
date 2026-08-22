@@ -1,0 +1,19 @@
+{
+  "name": "challenges-web",
+  "type": "module",
+  "version": "0.0.1",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "deploy": "astro build && wrangler pages deploy dist",
+    "prebuild": "node -e \"require('fs').copyFileSync('../packages/widget/leaderboard.js','public/embed/leaderboard.js')\""
+  },
+  "dependencies": {
+    "astro": "^7.2.4"
+  }
+}

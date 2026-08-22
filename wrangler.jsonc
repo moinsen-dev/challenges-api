@@ -1,0 +1,71 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "games-challenges-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-10",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true },
+  "triggers": {
+    // Retention sweep, daily at 03:17 UTC. Off-peak and not on the hour, so it
+    // never lands in the same minute as everyone else's cron.
+    "crons": ["17 3 * * *"]
+  },
+  // workers.dev stays enabled on purpose: the moinsen.dev zone runs Bot Fight
+  // Mode, which challenges every non-browser request. A challenged API is a
+  // broken API, so the unchallenged hostname remains the one clients use until
+  // the zone setting is resolved.
+  "workers_dev": true,
+  "routes": [
+    {
+      // One level under moinsen.dev on purpose: Universal SSL covers
+      // *.moinsen.dev but not a second level like api.challenges.moinsen.dev.
+      "pattern": "challenges-api.moinsen.dev",
+      "custom_domain": true
+    }
+  ],
+  // Verifier modules and input traces. Both are blobs a developer or a player
+  // supplied, so they live next to the ledger rather than inside it.
+  "r2_buckets": [
+    {
+      "binding": "BLOBS",
+      "bucket_name": "challenges-blobs"
+    }
+  ],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "challenges",
+      "database_id": "410c6b50-4139-48e6-84af-afea67f3ab3b",
+      // Applied with `wrangler d1 migrations apply`, which tracks what already
+      // ran in a `d1_migrations` table. Applying files by hand works exactly
+      // once — for whoever self-hosts this, it does not work at all.
+      "migrations_dir": "migrations"
+    }
+  ],
+  // ADMIN_KEY is deliberately NOT here. A plain-text var in this file wins over
+  // a secret of the same name on every deploy — which silently replaces the
+  // real key with a development placeholder. Local values live in `.dev.vars`.
+  "vars": {
+    // Where the developer console lives: the post-sign-in destination.
+    "CONSOLE_ORIGIN": "https://challenges.moinsen.dev/dashboard/",
+    // Who may hold a developer account here. Empty or missing means open,
+    // which is what a self-hoster wants. Checked on every sign-in, and for
+    // GitHub only against a VERIFIED address — a public profile email is
+    // whatever somebody typed, not evidence.
+    //   @domain          every verified address at that domain
+    //   name@domain      one exact address
+    //   github:login     one GitHub login, regardless of address
+    "DEV_ALLOWLIST": "@moinsen.dev",
+    // Passkeys are bound to one domain. A game on its own domain sends the
+    // player here to add or use one — the same hop an OAuth login takes.
+    "RP_ID": "moinsen.dev",
+    "RP_ORIGINS": "https://challenges.moinsen.dev"
+  }
+  // Secrets, never in this file:
+  //   wrangler secret put ADMIN_KEY
+  //   wrangler secret put GITHUB_CLIENT_ID
+  //   wrangler secret put GITHUB_CLIENT_SECRET
+  //   wrangler secret put GITHUB_CALLBACK_URL
+  //   wrangler secret put RESEND_API_KEY
+  //   wrangler secret put MAIL_FROM
+}

@@ -1,0 +1,33 @@
+{
+  "name": "challenges-api",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev --port 8799",
+    "db:reset": "rm -rf .wrangler/state/v3/d1 && wrangler d1 migrations apply challenges --local",
+    "smoke": "node scripts/smoke.mjs",
+    "test:glicko": "node scripts/glicko.test.mjs",
+    "deploy": "wrangler deploy",
+    "test": "bash scripts/test.sh",
+    "test:unit": "vitest run --coverage",
+    "db:migrate": "wrangler d1 migrations apply challenges --remote",
+    "test:sdk": "bash scripts/sdk-test.sh",
+    "test:verify": "bash scripts/verify-test.sh",
+    "build:wasm": "node scripts/build-test-wasm.mjs"
+  },
+  "dependencies": {
+    "hono": "^4.13.3"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.22.0",
+    "@vitest/coverage-istanbul": "^4.1.11",
+    "vitest": "^4.1.11",
+    "wabt": "^1.0.39",
+    "wrangler": "^4.124.0"
+  },
+  "allowScripts": {
+    "workerd@1.20260820.1": true,
+    "workerd@1.20260815.1": true
+  }
+}

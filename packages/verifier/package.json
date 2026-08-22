@@ -1,0 +1,9 @@
+{
+  "name": "@moinsen/challenges-verifier",
+  "version": "0.1.0",
+  "description": "Replay verifier for the Challenges API — re-simulates submitted runs against a deterministic WebAssembly module.",
+  "license": "CC0-1.0",
+  "type": "module",
+  "bin": { "challenges-verifier": "./src/index.mjs" },
+  "engines": { "node": ">=20" }
+}

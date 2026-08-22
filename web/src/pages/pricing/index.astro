@@ -1,0 +1,122 @@
+---
+import Base from '../../layouts/Base.astro'
+
+const metered = [
+  ['Entries', 'per 100,000 above the free allowance', 'direct compute and storage cost'],
+  ['Replay verification', 'per verified run', 'the most expensive operation in the system — real CPU'],
+  ['Titles above city level', 'per season and discipline', 'requires trust tier 2 and attention from us'],
+  ['Ceremony, custom domain', 'per season', 'operations and care'],
+]
+---
+<Base title="Pricing and licence — Challenges API">
+  <section class="section first">
+    <div class="wrap narrow">
+      <p class="eyebrow">Price and licence</p>
+      <h1 style="font-size: clamp(2.2rem, 5vw, 3.2rem);">The software is yours.<br />Running it is what costs.</h1>
+      <p class="lead">
+        The code is public domain as far as law allows. What we sell is the
+        operation of it — metered by what it actually consumes, never by how
+        many players you have.
+      </p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap narrow">
+      <h2>Free, and staying free</h2>
+      <div class="card" style="margin: 22px 0 10px;">
+        <span class="num">0 €</span>
+        <p>
+          One app. Leaderboards, qualifications, challenges, badges, collections,
+          events, daily seeds, profiles, rivals, blocks, reports, invites,
+          waitlists, and titles up to city level. Up to 100,000 entries a month.
+          No card, no trial clock.
+        </p>
+      </div>
+      <p class="small muted">
+        This is not a funnel. It is the level at which the service costs us
+        close to nothing, and at which a small game should never have to think
+        about a bill.
+      </p>
+
+      <h2 style="margin-top: 52px;">Metered where it costs</h2>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>line</th><th>unit</th><th>why it is priced</th></tr></thead>
+          <tbody>
+            {metered.map(([line, unit, why]) => (
+              <tr><td><strong>{line}</strong></td><td class="muted">{unit}</td><td class="muted">{why}</td></tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p style="margin-top: 20px;">
+        <strong style="color: var(--text)">Never per player.</strong> A per-user
+        price punishes exactly the growth that makes a competition layer
+        valuable, and it pushes developers into avoiding accounts — which is the
+        opposite of what anyone here wants.
+      </p>
+      <p class="small muted">
+        Rates are not switched on yet: the service currently runs for our own
+        apps. Until an outside developer actually needs metering, everything is
+        free and the roadmap says so openly.
+      </p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap narrow">
+      <h2>CC0, and why not simply "public domain"</h2>
+      <p>
+        Under German law you cannot give up your copyright — § 29 (1) UrhG. A
+        bare declaration of "this is public domain" therefore does nothing here
+        and leaves users guessing.
+      </p>
+      <p>
+        CC0 is built for exactly that: it waives every right as far as possible,
+        and for the jurisdictions where that fails it contains a fallback
+        licence — an irrevocable, worldwide, royalty-free permission to do
+        anything. The result in Hamburg is the same as in California.
+      </p>
+      <p class="small muted">
+        Honest footnote: CC0 explicitly grants no patent rights. There is no
+        patented technique in this codebase, so it does not matter here. If you
+        need patent language, use Apache-2.0 instead.
+      </p>
+
+      <h2 style="margin-top: 52px;">Why giving away the code is safe</h2>
+      <p>
+        Because the code was never the moat. The moat is the population: one
+        identity valid across many apps, districts with enough people in them
+        for a title to mean something, and titles somebody already holds.
+      </p>
+      <p class="quote" style="margin: 28px 0;">
+        Copy the code and you get an empty database. What you cannot copy is
+        the eleven people already in Eimsbüttel.
+      </p>
+      <p>
+        There is a second effect, and it is the one that matters to a developer:
+        integrating carries no vendor risk. If this service dies, you run it
+        yourself. For a competition layer that holds your players' titles, that
+        is a serious argument — and it costs us nothing we could have sold.
+      </p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap narrow">
+      <h2>Self-hosting</h2>
+      <p>
+        Clone it, run <code>npm test</code>, deploy it to your own Cloudflare
+        account. No licence key, no phone-home, no crippled edition. You also
+        avoid needing a data processing agreement with us, because there is no
+        processor involved.
+      </p>
+      <p class="small muted">
+        This is not an escape hatch we tolerate. It is a deliberate part of the
+        model, and the reason the documentation covers deployment as carefully
+        as it covers the API.
+      </p>
+    </div>
+  </section>
+</Base>

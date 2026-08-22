@@ -1,0 +1,196 @@
+---
+import Base from '../../layouts/Base.astro'
+
+const built = [
+  'Identity across apps', 'Four aggregations', 'Qualifications', 'Regional leaderboards',
+  'Async challenges', 'Head-to-head + Glicko-2', 'Geographic titles', 'Badge rule engine',
+  'Collections', 'Daily seeds', 'Event stream', 'Profiles', 'Rivals and friend boards',
+  'Blocks', 'Reports and moderation', 'Invites', 'Self-opening waitlists',
+  'GDPR export and deletion', 'Retention limits', 'Sign in with GitHub or email link',
+  'Key rotation, expiry, revocation', 'Self-service apps', 'Audit trail',
+  '220 tests at 97 % coverage',
+]
+
+const phases = [
+  {
+    n: 1, title: 'Actually online',
+    lead: 'Nothing below matters until this is done.',
+    items: [
+      'Remote D1 in the EU, worker deployed, custom domain, admin key as a secret',
+      'A real migration runner instead of hand-applied files',
+      'Cron triggers: retention sweep daily, season close on schedule',
+      'Static site and dashboard on Cloudflare Pages',
+    ],
+    done: 'the live smoke test passes against the public URL.',
+  },
+  {
+    n: '1b', title: 'The rest of the key story',
+    lead: 'Sign-in and key lifecycle are built. Three pieces need somebody outside us.',
+    items: [
+      'Register chapi_sk_ with GitHub secret scanning, so a leaked key is revoked before anyone reads it',
+      'Scoped keys — allowed to submit entries but not to create disciplines',
+    ],
+    done: 'a key pushed to a public repository is dead before anyone reads it.',
+  },
+  {
+    n: 2, title: 'SDKs, so integrating takes five minutes',
+    lead: 'The whole thesis is that nobody should build this twice. That only holds if integration is trivial in the languages small teams actually use.',
+    items: [
+      'JavaScript/TypeScript package, typed, browser and worker',
+      'Godot plugin in the Asset Library — the most underserved channel',
+      'Flutter/Dart package on pub.dev',
+      'A drop-in leaderboard widget: one script tag, claim the account later',
+      'Two of our own games wired end to end, in public, as the reference',
+    ],
+    done: 'somebody who is not us integrates without asking a question.',
+  },
+  {
+    n: 3, title: 'An identity that survives a lost phone',
+    lead: 'Today, losing the device without an open link code loses the account. Acceptable for a pilot, unacceptable for titles people care about.',
+    items: [
+      'Passkey and email upgrade on top of the anonymous account',
+      'Session listing and revocation',
+      'Recovery that does not require storing more than we do now',
+    ],
+    done: 'a player can move to a new phone with no support contact.',
+  },
+  {
+    n: 4, title: 'A read path that survives a real population',
+    lead: 'Ranks are computed in memory from the full standing. Correct, tested, fine for thousands — not for hundreds of thousands.',
+    items: [
+      'Materialised standings per competition key, rebuildable from the ledger',
+      'Rank and neighbourhood without loading the whole board',
+      'Pagination and cursors on every list endpoint',
+      'A load test that is part of the suite, not a one-off',
+    ],
+    done: 'a district with 100,000 entries answers as fast as one with ten.',
+  },
+  {
+    n: 5, title: 'Live',
+    lead: 'Everything so far works asynchronously on purpose. This is where simultaneity arrives.',
+    items: [
+      'SSE on the event stream, replacing polling',
+      'Presence and a matchmaking queue with parties and region hints',
+      'Server-issued join tickets so a match server can trust who joined',
+      'Signed webhooks with retries',
+    ],
+    done: 'two strangers in one city get matched and play without either client claiming a result.',
+  },
+  {
+    n: 6, title: 'Verification — the part nobody copies in a weekend',
+    lead: 'The moat is not the code, the code is CC0. It is that a title from here is believable. That needs a machine which can check a claim.',
+    items: [
+      'Developers upload a deterministic simulation core as a WASM module',
+      'We re-run the submitted input trace in a sandbox and compare the state hash',
+      'Metered per verified run, because it is real CPU',
+      'Verified results carry a mark; unverified ones say so',
+    ],
+    done: 'a tier-1 discipline can prove a run instead of trusting it.',
+  },
+  {
+    n: 7, title: 'Ceremony, because a title needs a moment',
+    lead: 'A season that simply ends is a season nobody remembers.',
+    items: [
+      'Tournaments: brackets, swiss, scheduled finals',
+      'Replays and ghosts — race the district champion while they sleep',
+      'Season ceremony, permanent title archive, shareable images per title',
+      'City clubs and team standings aggregated from individual results',
+    ],
+    done: 'winning a district title produces something a person wants to post.',
+  },
+  {
+    n: 8, title: 'Community surface',
+    lead: 'We do not win on budget. We win on care and closeness.',
+    items: [
+      'OpenAPI specification and generated typed clients',
+      'Docs with a live console against a sandbox app',
+      'Public changelog, status page, and a place to talk that we actually read',
+      'A city-by-city rollout, starting with Hamburg',
+    ],
+    done: 'the first city final happens with real humans in one room.',
+  },
+  {
+    n: 9, title: 'Billing, and not a day earlier',
+    lead: 'Metering, invoicing and quotas get built when an outside developer actually needs them — not to have a pricing page.',
+    items: [
+      'Usage metering per app',
+      'Payment and invoices',
+      'Quotas and honest overage behaviour',
+    ],
+    done: 'somebody outside pays for verification or a world-level title.',
+  },
+]
+
+const never = [
+  'Inventory and in-game currency', 'Cloud saves and player storage',
+  'Remote config and feature flags', 'Analytics', 'Push delivery', 'Chat',
+]
+---
+<Base title="Roadmap — Challenges API">
+  <section class="section first">
+    <div class="wrap narrow">
+      <p class="eyebrow">Roadmap</p>
+      <h1 style="font-size: clamp(2.2rem, 5vw, 3.2rem);">Sequenced by what blocks what.</h1>
+      <p class="lead">
+        The north star: be the competition layer small teams reach for — not by
+        outspending anyone, but through care for detail, closeness to the people
+        using it, and pricing nobody can undercut without losing money.
+      </p>
+      <p class="kicker">
+        Everything in the first block is built and tested. Everything after it
+        is not, and the order is honest about dependencies rather than about
+        what would be fun to build.
+      </p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <h2>Built</h2>
+      <ul class="ticks" style="margin-top: 20px;">
+        {built.map((item) => <li>{item}</li>)}
+      </ul>
+    </div>
+  </section>
+
+  {phases.map((phase) => (
+    <section class="section">
+      <div class="wrap hero">
+        <div>
+          <p class="eyebrow">Phase {phase.n}</p>
+          <h2>{phase.title}</h2>
+          <p>{phase.lead}</p>
+          <p class="small muted">
+            <strong style="color: var(--gold)">Done when</strong> {phase.done}
+          </p>
+        </div>
+        <div class="grid">
+          {phase.items.map((item) => (
+            <div class="card"><p>{item}</p></div>
+          ))}
+        </div>
+      </div>
+    </section>
+  ))}
+
+  <section class="section">
+    <div class="wrap narrow">
+      <p class="eyebrow">Out of scope, permanently</p>
+      <h2>What will never be built here.</h2>
+      <p>
+        Every one of these is a place where the big platforms became large,
+        expensive and slow. Staying out of them is the plan, not an oversight.
+      </p>
+      <div class="grid g3" style="margin-top: 22px;">
+        {never.map((item) => (
+          <div class="card"><p>{item}</p></div>
+        ))}
+      </div>
+      <p style="margin-top: 24px;">
+        Chat deserves its own sentence: it is where a small competition layer
+        turns into a moderation company. What exists here is challenges, rivals
+        and reports. Conversations belong in your app.
+      </p>
+    </div>
+  </section>
+</Base>

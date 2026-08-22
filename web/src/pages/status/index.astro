@@ -1,0 +1,90 @@
+---
+import Base from '../../layouts/Base.astro'
+const API = 'https://games-challenges-api.developer-331.workers.dev'
+---
+<Base title="Status — Challenges API">
+  <section class="section first">
+    <div class="wrap narrow">
+      <p class="eyebrow">Status</p>
+      <h1 style="font-size: clamp(2.2rem, 5vw, 3.2rem);">Is it up, and how does it know?</h1>
+      <p class="lead">
+        Read live from the API. A status page that cannot fail is decoration, so
+        this one shows the checks that were actually performed and how long each
+        took.
+      </p>
+
+      <div class="card" id="summary" style="margin-top: 26px;">
+        <p class="muted">Asking…</p>
+      </div>
+
+      <h2>Checks</h2>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>check</th><th>result</th><th class="num">time</th></tr></thead>
+          <tbody id="checks"><tr><td colspan="3" class="muted">…</td></tr></tbody>
+        </table>
+      </div>
+
+      <h2>Queues</h2>
+      <p class="kicker" style="margin-bottom: 16px;">
+        Work waiting to be done. None of these being zero is normal; all of them
+        growing is not.
+      </p>
+      <div class="grid g4" id="queues"></div>
+
+      <h2>Season</h2>
+      <div class="card" id="season"><p class="muted">…</p></div>
+
+      <p class="small muted" style="margin-top: 30px;">
+        Endpoint: <code>GET /v1/health</code> — no credential, so anybody can
+        watch. <span id="stamp"></span>
+      </p>
+    </div>
+  </section>
+
+  <script is:inline define:vars={{ API }}>
+    const $ = (id) => document.getElementById(id)
+    const esc = (v) => String(v ?? '').replace(/[<>&]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' })[c])
+
+    async function refresh() {
+      try {
+        const res = await fetch(API + '/v1/health')
+        const health = await res.json()
+        const ok = health.status === 'ok'
+
+        $('summary').innerHTML =
+          `<span class="num" style="color:${ok ? 'var(--good)' : 'var(--bad)'}">${ok ? 'Operational' : 'Degraded'}</span>` +
+          `<p>Every check below answered${ok ? '' : ' — except the ones marked'} at ${esc(health.checked_at.slice(11, 19))} UTC.</p>`
+
+        $('checks').innerHTML = Object.entries(health.checks)
+          .map(
+            ([name, check]) =>
+              `<tr><td><strong>${esc(name)}</strong></td>` +
+              `<td style="color:${check.ok ? 'var(--good)' : 'var(--bad)'}">${check.ok ? 'ok' : esc(check.detail ?? 'failed')}</td>` +
+              `<td class="num">${check.ms} ms</td></tr>`,
+          )
+          .join('')
+
+        $('queues').innerHTML = Object.entries(health.queues ?? {})
+          .map(
+            ([name, count]) =>
+              `<div class="card"><span class="num">${count}</span><p>${esc(name)}</p></div>`,
+          )
+          .join('')
+
+        $('season').innerHTML = health.season
+          ? `<h3>${esc(health.season.name)}</h3><p>Open until ${esc(health.season.ends_at.slice(0, 10))}.</p>`
+          : '<p class="muted">No open season. Entries are refused until one is created.</p>'
+
+        $('stamp').textContent =
+          'Last maintenance sweep: ' + (health.last_maintenance ? health.last_maintenance.slice(0, 16).replace('T', ' ') + ' UTC' : 'not yet run')
+      } catch (error) {
+        $('summary').innerHTML =
+          `<span class="num" style="color:var(--bad)">Unreachable</span><p>${esc(error.message)}</p>`
+      }
+    }
+
+    refresh()
+    setInterval(refresh, 20000)
+  </script>
+</Base>

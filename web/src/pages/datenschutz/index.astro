@@ -1,0 +1,143 @@
+---
+import Base from '../../layouts/Base.astro'
+
+const stored = [
+  ['Handle', 'selbstgewaehlter Name', 'Anzeige in Ranglisten und Gegnersuche'],
+  ['Sitzungsmerkmal', 'SHA-256 des Zugangstokens', 'Anmeldung; das Token selbst wird nie gespeichert'],
+  ['Heimatbezirk', 'Bezirk, saisonal gesperrt', 'geografische Titel'],
+  ['Eintraege', 'Messwert, Tag, Zeitpunkt, Disziplin', 'der Wettbewerb selbst'],
+  ['Abgeleitete Staende', 'Qualifikationen, Titel, Badges, Ratings', 'Anzeige des Fortschritts'],
+  ['Ereignisse', 'was wann geschah', 'Benachrichtigung der App'],
+]
+
+const rights = [
+  ['Auskunft', 'Art. 15', 'GET /v1/me/export liefert alles als JSON'],
+  ['Berichtigung', 'Art. 16', 'Handle und Region ueber die App'],
+  ['Loeschung', 'Art. 17', 'DELETE /v1/me, sofort und vollstaendig'],
+  ['Einschraenkung', 'Art. 18', 'business@moinsen.dev'],
+  ['Datenuebertragbarkeit', 'Art. 20', 'GET /v1/me/export'],
+  ['Widerspruch', 'Art. 21', 'business@moinsen.dev'],
+]
+---
+<Base title="Datenschutz — Challenges API">
+  <section class="wrap narrow" style="padding-top: 56px;">
+    <h1 style="font-size: 2rem;">Datenschutz</h1>
+    <p class="lead">
+      Dieser Dienst ist so gebaut, dass er moeglichst wenig ueber Menschen weiss.
+      Ein Konto entsteht ohne jede Angabe — keine E-Mail, kein Name, keine
+      Adresse. Das ist der Normalfall, nicht die Ausnahme.
+    </p>
+
+    <h2>Verantwortlicher</h2>
+    <p>
+      Ulrich Diedrichsen, Kippingstrasse 27, 20144 Hamburg, Deutschland<br />
+      <a href="mailto:business@moinsen.dev">business@moinsen.dev</a>
+    </p>
+    <p class="muted" style="font-size: 0.92rem;">
+      Fuer Apps fremder Entwickler ist der jeweilige Entwickler Verantwortlicher
+      und wir Auftragsverarbeiter nach Art. 28 DSGVO. In diesem Fall gilt
+      zusaetzlich der zwischen uns geschlossene Vertrag zur Auftragsverarbeitung.
+    </p>
+
+    <h2>Was gespeichert wird</h2>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Daten</th><th>Inhalt</th><th>Zweck</th></tr></thead>
+        <tbody>
+          {stored.map(([name, content, purpose]) => (
+            <tr><td><strong>{name}</strong></td><td class="muted">{content}</td><td class="muted">{purpose}</td></tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+
+    <h2>Was ausdruecklich nicht gespeichert wird</h2>
+    <ul class="muted">
+      <li>keine E-Mail-Adresse, kein Klarname, keine Telefonnummer</li>
+      <li>keine IP-Adresse in der Datenbank dieses Dienstes</li>
+      <li>keine Koordinaten, keine Anschrift — nichts feiner als ein Bezirk</li>
+      <li>keine Cookies, kein Tracking, keine Werbekennung, kein Fingerprint</li>
+    </ul>
+    <p class="muted" style="font-size: 0.92rem;">
+      Der Zugangstoken liegt im <code>localStorage</code> des Geraets. Er ist zur
+      Erbringung des Dienstes zwingend erforderlich und damit nach § 25 Abs. 2
+      TDDDG einwilligungsfrei — es gibt deshalb kein Zustimmungsfenster.
+    </p>
+
+    <h2>Rechtsgrundlagen</h2>
+    <p class="muted">
+      Die Verarbeitung der Wettbewerbsdaten erfolgt zur Erfuellung des
+      Nutzungsverhaeltnisses nach Art. 6 Abs. 1 lit. b DSGVO. Die Angabe eines
+      Heimatbezirks ist freiwillig und beruht auf Einwilligung nach Art. 6 Abs. 1
+      lit. a DSGVO; ohne sie funktioniert alles ausser den geografischen Titeln.
+      Die Begrenzung neuer Konten je Stunde stuetzt sich auf das berechtigte
+      Interesse an einem manipulationsfreien Wettbewerb, Art. 6 Abs. 1 lit. f DSGVO.
+    </p>
+
+    <h2>Empfaenger</h2>
+    <p class="muted">
+      Betrieb und Speicherung erfolgen bei <strong>Cloudflare, Inc.</strong> Die
+      Datenbank wird in der Europaeischen Union angelegt. Jeder Aufruf laeuft
+      ueber das Netz von Cloudflare; dort fallen kurzlebige Verbindungsdaten
+      einschliesslich der IP-Adresse an, die dieser Dienst selbst nicht speichert.
+      Fuer Datenfluesse in die USA gelten die Standardvertragsklauseln und das
+      EU-US Data Privacy Framework. Weitere Empfaenger gibt es nicht; es findet
+      kein Verkauf und keine Weitergabe zu Werbezwecken statt.
+    </p>
+
+    <h2>Speicherdauer</h2>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Daten</th><th>Grenze</th></tr></thead>
+        <tbody>
+          <tr><td>Verknuepfungscodes</td><td class="muted">1 Tag nach Benutzung oder Ablauf</td></tr>
+          <tr><td>Ereignisse</td><td class="muted">180 Tage</td></tr>
+          <tr><td>Sitzungen</td><td class="muted">730 Tage ohne Benutzung</td></tr>
+          <tr><td>Eintraege, Titel, Badges</td><td class="muted">bis zur Loeschung des Kontos</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="muted" style="font-size: 0.92rem;">
+      Diese Grenzen sind im Programm durchgesetzt und Teil der automatischen
+      Pruefungen, nicht bloss eine Absichtserklaerung.
+    </p>
+
+    <h2>Deine Rechte</h2>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Recht</th><th>Grundlage</th><th>Weg</th></tr></thead>
+        <tbody>
+          {rights.map(([right, article, how]) => (
+            <tr><td><strong>{right}</strong></td><td class="muted">{article}</td><td class="mono muted">{how}</td></tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+    <p class="muted" style="font-size: 0.92rem;">
+      Eine Loeschung ist endgueltig: es gibt keinen Papierkorb und keinen
+      anonymisierten Restbestand. Auch Titel und Ranglisteneintraege verschwinden.
+    </p>
+
+    <h2>Minderjaehrige</h2>
+    <p class="muted">
+      Der Dienst richtet sich nicht gezielt an Kinder. Weil ein Konto ohne jede
+      Angabe entsteht, koennen wir das Alter weder pruefen noch speichern. Wir
+      verarbeiten deshalb bewusst so wenig, dass auch bei einem minderjaehrigen
+      Nutzer kein nennenswertes Risiko entsteht: kein Klarname, kein Kontaktweg,
+      keine Ortung feiner als ein Stadtbezirk. Wer den Handle eines Kindes
+      geloescht haben moechte, schreibt an business@moinsen.dev.
+    </p>
+
+    <h2>Beschwerderecht</h2>
+    <p class="muted">
+      Der Hamburgische Beauftragte fuer Datenschutz und Informationsfreiheit,
+      Ludwig-Erhard-Str. 22, 20459 Hamburg,{' '}
+      <a href="mailto:mailbox@datenschutz.hamburg.de">mailbox@datenschutz.hamburg.de</a>
+    </p>
+
+    <p class="muted" style="font-size: 0.86rem; margin-top: 40px;">
+      Stand: 22. August 2026. Diese Erklaerung beschreibt den Stand der Software
+      und ist nicht anwaltlich geprueft.
+    </p>
+  </section>
+</Base>

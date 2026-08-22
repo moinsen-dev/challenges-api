@@ -1,0 +1,381 @@
+---
+import Base from '../../layouts/Base.astro'
+import { API, SANDBOX_KEY } from '../../instance'
+
+const auth = [
+  ['X-App-Key: pk_...', 'any client', 'accounts, catalog, entries, leaderboards, social'],
+  ['X-App-Key: sk_...', 'your server', 'disciplines, duels, collectibles, invites'],
+  ['Authorization: Bearer', 'a player', 'anything tied to a person'],
+  ['X-Admin-Key', 'the operator', 'apps, regions, seasons, moderation, retention'],
+]
+
+const groups = [
+  {
+    title: 'Client', auth: 'X-App-Key: pk_… + Bearer',
+    note: 'Everything that may live in a browser or a game build.',
+    rows: [
+      ['POST', '/v1/auth/anonymous', 'account in one call (invite_code when the app is closed)'],
+      ['POST', '/v1/me/link-code', 'one-time code to move the identity'],
+      ['POST', '/v1/auth/redeem', 'redeem it on another device or app'],
+      ['GET', '/v1/me', 'profile, qualifications, badges, titles'],
+      ['GET', '/v1/me/export', 'complete data export'],
+      ['DELETE', '/v1/me', 'irreversible deletion'],
+      ['PATCH', '/v1/me/region', 'home district, locked for the season'],
+      ['PATCH', '/v1/me/profile', 'display name, avatar, locale, featured title or badge'],
+      ['PATCH', '/v1/me/handle', 'change handle, 30-day lock afterwards'],
+      ['GET', '/v1/catalog', 'disciplines, regions, season, collections'],
+      ['POST', '/v1/entries', 'submit an entry'],
+      ['GET', '/v1/disciplines/:d/me', 'own value, rank, streak, exam status'],
+      ['GET', '/v1/leaderboards/:d', '?region= ?scope=friends ?limit='],
+      ['GET', '/v1/daily/:d', 'the day seed, identical worldwide'],
+      ['POST', '/v1/challenges', 'create an async challenge'],
+      ['POST', '/v1/challenges/:id/accept', 'accept one'],
+      ['GET', '/v1/challenges', 'your challenges'],
+      ['GET', '/v1/ratings/:d', 'rating list'],
+      ['GET', '/v1/collections/:slug', 'a collection with your holdings'],
+      ['POST', '/v1/me/follows/:handle', 'follow a rival'],
+      ['POST', '/v1/me/blocks/:handle', 'block a person'],
+      ['POST', '/v1/reports', 'report a person'],
+      ['POST', '/v1/waitlist/:region', 'wait for a closed region'],
+      ['GET', '/v1/events', 'event stream (?since=)'],
+    ],
+  },
+  {
+    title: 'Developer', auth: 'X-App-Key: sk_…',
+    note: 'Everything that carries authority. Belongs on a server, never in a client.',
+    rows: [
+      ['POST', '/v1/disciplines', 'aggregation, trust tier, exam bar, title reach'],
+      ['POST', '/v1/badges', 'a badge scoped to your app'],
+      ['POST', '/v1/collections', 'create a collection'],
+      ['POST', '/v1/collections/:slug/items', 'define collectibles'],
+      ['POST', '/v1/collections/:slug/grant', 'grant one to a player'],
+      ['POST', '/v1/matches', 'duel result with placements, updates Glicko-2'],
+      ['POST', '/v1/invites', 'invite codes, shown exactly once'],
+    ],
+  },
+  {
+    title: 'Developer console', auth: 'session cookie',
+    note: 'Sign-in authenticates the console, never an API request. A game presents a key and nothing else, so an outage at the sign-in provider cannot take a game down.',
+    rows: [
+      ['GET', '/v1/dev/auth/github', 'start GitHub sign-in (?redirect= back to your console)'],
+      ['POST', '/v1/dev/auth/email', 'send a magic link and a six-digit code'],
+      ['POST', '/v1/dev/auth/email/verify', 'the code, when the mail opens on another device'],
+      ['GET', '/v1/dev/me', 'account, two-factor status, app quota'],
+      ['GET', '/v1/dev/sessions', 'list sessions; revoke-others ends the rest'],
+      ['POST', '/v1/dev/apps', 'create your own app, keys included'],
+      ['GET', '/v1/dev/apps/:slug/keys', 'prefix, name, last used, expiry, revocation'],
+      ['POST', '/v1/dev/apps/:slug/keys', 'mint a key (kind, name, expires_in_days)'],
+      ['POST', '/v1/dev/keys/:id/revoke', 'revoke one, with a reason'],
+      ['GET', '/v1/dev/audit', 'what you did, in order'],
+    ],
+  },
+  {
+    title: 'Operator', auth: 'X-Admin-Key',
+    note: 'Platform operations: apps, regions, seasons, moderation, retention.',
+    rows: [
+      ['POST', '/v1/admin/apps', 'create an app, both keys shown once'],
+      ['PATCH', '/v1/admin/apps/:slug', 'access mode, invite allowance'],
+      ['GET', '/v1/admin/apps/:slug', 'disciplines, activity, review cases'],
+      ['POST', '/v1/admin/regions', 'unlock a region, optionally closed with a threshold'],
+      ['POST', '/v1/admin/regions/:id/unlock', 'open it and notify the waitlist'],
+      ['GET', '/v1/admin/regions/density', 'contenders per region (?season=)'],
+      ['POST', '/v1/admin/seasons/:id/close', 'award titles, open the next (?dry_run=1)'],
+      ['POST', '/v1/admin/entries/:id/review', 'decide a held entry'],
+      ['GET', '/v1/admin/reports', 'moderation queue'],
+      ['POST', '/v1/admin/reports/:id/resolve', 'rename, suspend or ban'],
+      ['POST', '/v1/admin/maintenance', 'retention sweep (?dry_run=1)'],
+    ],
+  },
+]
+
+const request = `POST /v1/entries
+X-App-Key: pk_live_...
+Authorization: Bearer ...
+
+{
+  "discipline": "kilometres",
+  "value": 7.2,
+  "occurred_at": "2026-08-22T21:40:00+02:00",
+  "idem_key": "run-2026-08-22-a"
+}`
+
+const response = `{
+  "entry_id": "ent_...",
+  "value": 7.2,
+  "aggregate": 107.2,
+  "aggregation": "sum",
+  "qualified": true,
+  "qualified_now": false,
+  "rank": { "region": { "rank": 2, "of": 9 },
+            "global": { "rank": 41, "of": 260 } },
+  "streak_days": null,
+  "settled_challenges": [],
+  "badges_earned": []
+}`
+---
+<Base title="Documentation — Challenges API">
+  <section class="section first">
+    <div class="wrap narrow">
+      <p class="eyebrow">Documentation</p>
+      <h1 style="font-size: clamp(2.2rem, 5vw, 3.2rem);">Everything under <code style="font-size: 0.6em">/v1</code>.</h1>
+      <p class="lead">
+        Responses are JSON. Errors carry an <code>error</code> field in plain
+        words, not a code you have to look up.
+      </p>
+      <p>
+        The machine-readable description is at
+        <a href={`${API}/v1/openapi.json`}><code>/v1/openapi.json</code></a> —
+        OpenAPI 3.1, and a test fails the build if it ever describes an endpoint
+        this service does not have, or misses one it does.
+      </p>
+    </div>
+  </section>
+
+  <!-- ---------------------------------------------------------- console -->
+  <section class="section">
+    <div class="wrap narrow">
+      <p class="eyebrow">Try it</p>
+      <h2>A real account, on a real instance, right now.</h2>
+      <p class="kicker" style="margin-bottom: 22px;">
+        This runs against a sandbox app on the live service. The key below is a
+        public key, and public keys are meant to be public: it can read boards
+        and create throwaway accounts, and nothing that carries authority.
+      </p>
+
+      <div class="card">
+        <div class="grid" style="gap: 10px;">
+          <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+            <button class="btn" data-try="signin">Create an account</button>
+            <button class="btn" data-try="region">Choose Eimsbüttel</button>
+            <button class="btn" data-try="submit">Submit a score</button>
+            <button class="btn" data-try="board">Read the leaderboard</button>
+            <button class="btn" data-try="around">Where am I?</button>
+            <button class="btn" data-try="reset">Forget me</button>
+          </div>
+          <p class="small muted" id="console-who">Not signed in.</p>
+        </div>
+      </div>
+      <pre id="console-out" style="margin-top: 14px; min-height: 150px;"><code>Press a button. Every call is shown exactly as it goes out.</code></pre>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap narrow">
+      <h2>Five rules that explain most answers</h2>
+      <ol style="color: var(--text-2); padding-left: 20px;">
+        <li style="margin-bottom: 10px;">
+          <strong style="color: var(--text)">The ledger is the truth.</strong>
+          Leaderboards, qualifications, streaks, badges, ratings and titles are derived.
+        </li>
+        <li style="margin-bottom: 10px;">
+          <strong style="color: var(--text)">A qualification is the entrance.</strong>
+          No exam passed, no place on a board.
+        </li>
+        <li style="margin-bottom: 10px;">
+          <strong style="color: var(--text)">A title never reaches higher than its trust tier.</strong>
+          Tier 0 awards nothing, tier 1 reaches city level at most.
+        </li>
+        <li style="margin-bottom: 10px;">
+          <strong style="color: var(--text)">Two keys per app.</strong>
+          <code>pk_</code> may live in a client, <code>sk_</code> never.
+        </li>
+        <li>
+          <strong style="color: var(--text)">A block cuts contact, never results.</strong>
+          Otherwise a leaderboard would have different truths per viewer.
+        </li>
+      </ol>
+
+      <h2 style="margin-top: 52px;">Authentication</h2>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>header</th><th>who</th><th>unlocks</th></tr></thead>
+          <tbody>
+            {auth.map(([header, who, unlocks]) => (
+              <tr><td class="mono">{header}</td><td><strong>{who}</strong></td><td class="muted">{unlocks}</td></tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p class="small muted" style="margin-top: 14px;">
+        A player token is platform-wide: the same token identifies the same
+        person in every app. To move an identity to another device or domain,
+        mint a one-time code with <code>POST /v1/me/link-code</code> and redeem
+        it with <code>POST /v1/auth/redeem</code>.
+      </p>
+
+      <h2 style="margin-top: 52px;">Submitting an entry</h2>
+      <pre><code>{request}</code></pre>
+      <p class="small muted" style="margin-top: 14px;">
+        <strong style="color: var(--text)">Habit apps, read this:</strong> the
+        day slice comes from <code>occurred_at</code>. Send the timestamp with
+        its local offset and 23:40 local falls on the right day instead of the
+        UTC day after. Without it, server time in UTC applies.
+      </p>
+      <pre style="margin-top: 16px;"><code>{response}</code></pre>
+      <p class="small muted" style="margin-top: 14px;">
+        Returns <code>202</code> with <code>status: "review"</code> above the
+        plausibility limit, <code>200</code> with <code>duplicate: true</code>
+        for a repeated <code>idem_key</code>, <code>413</code> when
+        <code>meta</code> exceeds 4 KB.
+      </p>
+    </div>
+  </section>
+
+  {groups.map((group) => (
+    <section class="section">
+      <div class="wrap narrow">
+        <h2>{group.title} <span class="pill">{group.auth}</span></h2>
+        <p class="kicker" style="margin-bottom: 18px;">{group.note}</p>
+        <div class="scroll">
+          <table>
+            <tbody>
+              {group.rows.map(([method, path, purpose]) => (
+                <tr>
+                  <td class="mono muted" style="width: 74px;">{method}</td>
+                  <td class="mono">{path}</td>
+                  <td class="muted">{purpose}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  ))}
+
+  <section class="section">
+    <div class="wrap narrow">
+      <h2>Keys, and what happens when one leaks</h2>
+      <p class="kicker" style="margin-bottom: 18px;">
+        A key is an object with a life, not a column on your app. It is shown
+        once, only its hash and prefix are stored, and it records when it was
+        last seen.
+      </p>
+      <div class="grid g2">
+        <div class="card">
+          <h3>Rotation without a gap</h3>
+          <p>Mint, deploy, then revoke. Both keys work in between — the only
+          kind of rotation anyone actually performs. Revoking the last live key
+          of a kind is refused, because that is not rotation, that is an outage.</p>
+        </div>
+        <div class="card">
+          <h3>A second, recent proof for secrets</h3>
+          <p>Minting a secret key needs two-factor at the provider for a GitHub
+          account, or a sign-in from the last 15 minutes for an email account.
+          Public keys stay available either way, so nobody is locked out of
+          their own app.</p>
+        </div>
+        <div class="card">
+          <h3>Two ways in, no password</h3>
+          <p>GitHub, or an emailed link and code. The email path answers the
+          same for known and unknown addresses, expires in 15 minutes, works
+          once, and kills the code after five wrong guesses.</p>
+        </div>
+        <div class="card">
+          <h3>A revoked key says so</h3>
+          <p>It answers <code>401</code> with <code>app key revoked</code> and a
+          timestamp, instead of a silent failure that costs somebody an hour.</p>
+        </div>
+        <div class="card">
+          <h3>Distinctive prefixes</h3>
+          <p><code>chapi_sk_</code> is deliberately greppable so a secret
+          scanner can recognise it in a public repository. Registering the
+          pattern with GitHub is phase 1b on the <a href="/roadmap/">roadmap</a>.</p>
+        </div>
+      </div>
+
+      <h2>Trust tiers</h2>
+      <p class="kicker" style="margin-bottom: 18px;">
+        A leaderboard is worth what its weakest claim is worth. Every discipline
+        declares who vouches for a result, and the ladder is capped by it.
+      </p>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>tier</th><th>vouched for by</th><th>highest title</th></tr></thead>
+          <tbody>
+            <tr><td><span class="pill">0 client</span></td><td>nobody</td><td class="muted">none</td></tr>
+            <tr><td><span class="pill t1">1 replay</span></td><td>server re-runs the input trace</td><td class="muted">city</td></tr>
+            <tr><td><span class="pill t2">2 server</span></td><td>the app's own signing server</td><td class="muted">world</td></tr>
+            <tr><td><span class="pill gold">3 witnessed</span></td><td>a scheduled, recorded final</td><td class="muted">world</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="small muted" style="margin-top: 14px;">
+        Disciplines at tier 2 and above refuse entries submitted with the public
+        key. Tier 1 verification itself is phase 6 on the
+        <a href="/roadmap/">roadmap</a> — until then, tier 1 means the shape is
+        ready, not that a run has been re-simulated.
+      </p>
+    </div>
+  </section>
+  <script is:inline define:vars={{ API, SANDBOX_KEY }}>
+    const out = document.getElementById('console-out')
+    const who = document.getElementById('console-who')
+    const store = window.localStorage
+    const KEY = 'docs.console.token'
+    const DISCIPLINE = 'score-attack'
+
+    const show = (method, path, status, body) => {
+      out.innerHTML =
+        `<code>${method} ${path}\n\n` +
+        `HTTP ${status}\n` +
+        JSON.stringify(body, null, 2).replace(/[<>&]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' })[c]) +
+        `</code>`
+    }
+
+    async function api(method, path, body) {
+      const token = store.getItem(KEY)
+      const res = await fetch(API + path, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-App-Key': SANDBOX_KEY,
+          ...(token ? { Authorization: 'Bearer ' + token } : {}),
+        },
+        body: body ? JSON.stringify(body) : undefined,
+      })
+      const parsed = await res.json().catch(() => ({}))
+      show(method, path, res.status, parsed)
+      return parsed
+    }
+
+    const refreshWho = async () => {
+      const token = store.getItem(KEY)
+      if (!token) { who.textContent = 'Not signed in.' ; return }
+      try {
+        const me = await (await fetch(API + '/v1/me', {
+          headers: { 'X-App-Key': SANDBOX_KEY, Authorization: 'Bearer ' + token },
+        })).json()
+        who.textContent = me.player
+          ? `Signed in as ${me.player.handle}${me.region ? ' · ' + me.region.name : ''}`
+          : 'Not signed in.'
+      } catch { who.textContent = 'Not signed in.' }
+    }
+
+    const actions = {
+      async signin() {
+        const created = await api('POST', '/v1/auth/anonymous', {})
+        if (created.token) store.setItem(KEY, created.token)
+        refreshWho()
+      },
+      region: () => api('PATCH', '/v1/me/region', { region_id: 'hh-eimsbuettel' }).then(refreshWho),
+      submit: () =>
+        api('POST', '/v1/entries', {
+          discipline: DISCIPLINE,
+          value: Math.floor(Math.random() * 900) + 100,
+        }),
+      board: () => api('GET', `/v1/leaderboards/${DISCIPLINE}?region=hh-eimsbuettel&limit=5`),
+      around: () => api('GET', `/v1/leaderboards/${DISCIPLINE}/around?region=hh-eimsbuettel`),
+      async reset() {
+        await api('DELETE', '/v1/me')
+        store.removeItem(KEY)
+        refreshWho()
+      },
+    }
+
+    document.querySelectorAll('[data-try]').forEach((button) =>
+      button.addEventListener('click', () => actions[button.dataset.try]()),
+    )
+    refreshWho()
+  </script>
+</Base>

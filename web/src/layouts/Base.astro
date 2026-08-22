@@ -1,0 +1,64 @@
+---
+import '../styles/base.css'
+const {
+  title,
+  description = 'A shared competition layer for small apps: identity, leaderboards, qualifications, challenges, badges and geographic titles — from district to world.',
+} = Astro.props
+const path = Astro.url.pathname
+const nav = [
+  { href: '/', label: 'Overview' },
+  { href: '/docs/', label: 'Docs' },
+  { href: '/pricing/', label: 'Pricing' },
+  { href: '/roadmap/', label: 'Roadmap' },
+  { href: '/status/', label: 'Status' },
+]
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <header class="top">
+      <div class="wrap">
+        <a class="brand" href="/">Challenges<em>.</em>API</a>
+        <nav>
+          {nav.map((n) => (
+            <a href={n.href} aria-current={path === n.href ? 'page' : undefined}>{n.label}</a>
+          ))}
+          <a class="ghost" href="/dashboard/">Dashboard</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <slot />
+    </main>
+
+    <footer class="bottom">
+      <div class="wrap cols">
+        <span>Challenges API — a competition layer for many small apps. Hamburg first.</span>
+        <span class="links">
+          <a href="/docs/">Docs</a>
+          <a href="/roadmap/">Roadmap</a>
+          <a href="/changelog/">Changelog</a>
+          <a href="/hamburg/">Hamburg</a>
+          <a href="/impressum/">Impressum</a>
+          <a href="/datenschutz/">Datenschutz</a>
+        </span>
+      </div>
+    </footer>
+  </body>
+</html>

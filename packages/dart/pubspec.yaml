@@ -1,0 +1,14 @@
+name: challenges_api
+description: Client for the Challenges API — leaderboards, qualifications, challenges, badges and geographic titles.
+version: 0.1.0
+repository: https://github.com/moinsen-dev/challenges-api
+
+environment:
+  sdk: ^3.5.0
+
+dependencies:
+  http: ^1.2.0
+
+dev_dependencies:
+  test: ^1.25.0
+  lints: ^5.0.0

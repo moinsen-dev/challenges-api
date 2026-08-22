@@ -1,0 +1,343 @@
+---
+import Base from '../layouts/Base.astro'
+
+const board = [
+  { rank: 1, who: 'kirsten', score: '184,200', champion: true },
+  { rank: 2, who: 'tobi_hh', score: '171,850' },
+  { rank: 3, who: 'anna', score: '160,010' },
+  { rank: 4, who: 'monokel', score: '142,300' },
+  { rank: 5, who: 'you', score: '138,940' },
+]
+
+const aggregations = [
+  ['best', 'the best single entry', 'high score, best lap', '184,200 pts'],
+  ['sum', 'the sum over the season', 'kilometres, minutes, pages', '107 km'],
+  ['count', 'the number of entries', 'finds, check-ins, sessions', '38 finds'],
+  ['streak', 'the longest run of days', 'habits, practice, study', '61 days'],
+]
+
+const ladder = [
+  ['Level 1', 'Eimsbüttel', 'district', false],
+  ['Level 2', 'Hamburg', 'city', false],
+  ['Level 3', 'Hamburg', 'state', true],
+  ['Level 4', 'Germany', 'country', true],
+  ['Level 5', 'Europe', 'continent', true],
+  ['Level 6', 'World', 'world', true],
+]
+
+const rebuilt = [
+  'Anonymous accounts and sessions',
+  'A leaderboard that survives a restart',
+  'Per-region and per-friend standings',
+  'Streak counting across time zones',
+  'A challenge between two players',
+  'Elo or Glicko, done wrong the first time',
+  'Badges, and the rules behind them',
+  'Collections and set completion',
+  'Daily seeds everyone shares',
+  'Handle changes without breaking history',
+  'Blocking, reporting, moderating',
+  'Invite codes and closed betas',
+  'Waitlists for a region or a launch',
+  'Idempotency for a flaky mobile network',
+  'Cheat plausibility limits',
+  'GDPR export and deletion',
+]
+
+const snippets = {
+  javascript: `import { connect } from '@moinsen/challenges'
+
+const api = await connect({ base, appKey: 'pk_live_...' })
+
+await api.submit('score-attack', 12500)
+const board = await api.leaderboard('score-attack', { region: api.regionId })
+
+board.entries[0].handle  //  'kirsten'
+board.title_eligible     //  true — this district can crown someone`,
+  godot: `var api := ChallengesAPI.new()
+add_child(api)
+await api.connect_anonymous("pk_live_...")
+
+await api.submit("score-attack", score)
+var board := await api.leaderboard("score-attack", api.region_id)
+
+for row in board.entries:
+    print("%d. %s — %d" % [row.rank, row.handle, row.value])`,
+  dart: `final api = await Challenges.connect(
+  base: base,
+  appKey: 'pk_live_...',
+);
+
+await api.submit('daily-practice', 1);
+final me = await api.status('daily-practice');
+
+me.streakDays;  // 61
+me.rank.region; // (rank: 2, of: 19)`,
+}
+---
+<Base title="Challenges API — a competition layer for small apps">
+  <!-- ------------------------------------------------------------- hero -->
+  <section class="section first">
+    <div class="wrap hero">
+      <div>
+        <p class="eyebrow">Competition as infrastructure</p>
+        <h1>Your players are nobody<br />on a world leaderboard.</h1>
+        <p class="lead">
+          Here they are champion of their neighbourhood. One shared layer for
+          identity, leaderboards, qualifications, challenges, badges and
+          geographic titles — from district to world. Free to self-host,
+          billed by usage, never per player.
+        </p>
+        <div class="cta-row">
+          <a class="btn primary" href="/docs/">Read the docs</a>
+          <a class="btn" href="/pricing/">Pricing and licence</a>
+          <a class="btn" href="/roadmap/">Roadmap</a>
+        </div>
+      </div>
+
+      <div class="board">
+        <header>
+          <span>score-attack</span>
+          <span class="where">· Eimsbüttel</span>
+          <span class="season">Season 1</span>
+        </header>
+        <ol>
+          {board.map((row) => (
+            <li class={row.champion ? 'champion' : undefined}>
+              <span class="rank">{row.rank}</span>
+              <span class="who">
+                {row.who}
+                {row.champion ? <span class="title-chip">district champion</span> : null}
+              </span>
+              <span class="score">{row.score}</span>
+            </li>
+          ))}
+        </ol>
+        <footer>
+          <span class="pill t1">tier 1 · replay verified</span>
+          <span>19 contenders · title eligible</span>
+        </footer>
+      </div>
+    </div>
+  </section>
+
+  <!-- ---------------------------------------------------------- the why -->
+  <section class="section">
+    <div class="wrap">
+      <p class="eyebrow">Why this exists</p>
+      <h2>A leaderboard is worthless.<br />A title is not.</h2>
+      <p class="lead" style="margin-bottom: 34px;">
+        The difference between the two is not technology, it is credibility —
+        and credibility has four parts. None of them is solved by the usual
+        backends, all four are too expensive for a small team, and each one
+        gets better the more apps take part.
+      </p>
+      <div class="grid g4">
+        <div class="card">
+          <h3>Verification</h3>
+          <p>The number was demonstrably played, not invented.</p>
+        </div>
+        <div class="card">
+          <h3>Scarcity</h3>
+          <p>Seasons end. A region needs enough contenders and a unique winner.</p>
+        </div>
+        <div class="card">
+          <h3>Witness</h3>
+          <p>The final was scheduled, recorded, public.</p>
+        </div>
+        <div class="card">
+          <h3>Portability</h3>
+          <p>The title stays with the player, even if the game dies.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ------------------------------------------------------ aggregations -->
+  <section class="section">
+    <div class="wrap">
+      <p class="eyebrow">Not only games</p>
+      <h2>One field decides what you are building.</h2>
+      <p class="kicker" style="margin-bottom: 30px;">
+        A high-score game, a running app and a habit tracker differ by exactly
+        one property on a discipline. Everything else — identity, regions,
+        qualification, titles, challenges, badges — stays the same.
+      </p>
+      <div class="scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>aggregation</th>
+              <th>a player's value is</th>
+              <th>typical case</th>
+              <th class="right">looks like</th>
+            </tr>
+          </thead>
+          <tbody>
+            {aggregations.map(([key, meaning, example, sample]) => (
+              <tr>
+                <td><code>{key}</code></td>
+                <td><strong>{meaning}</strong></td>
+                <td class="muted">{example}</td>
+                <td class="right mono">{sample}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ------------------------------------------------------------- code -->
+  <section class="section">
+    <div class="wrap">
+      <p class="eyebrow">Integration</p>
+      <h2>Three lines, then you are on the board.</h2>
+      <p class="kicker" style="margin-bottom: 26px;">
+        Only the public key ever touches a client. Anything carrying authority —
+        creating disciplines, reporting duels, granting collectibles — needs the
+        secret key, and therefore a server.
+      </p>
+
+      <div class="tabs" role="tablist">
+        <button role="tab" aria-selected="true" data-tab="javascript">JavaScript</button>
+        <button role="tab" aria-selected="false" data-tab="godot">Godot</button>
+        <button role="tab" aria-selected="false" data-tab="dart">Dart</button>
+      </div>
+      {Object.entries(snippets).map(([name, code], i) => (
+        <div class="tabpanel" data-panel={name} hidden={i !== 0}>
+          <pre><code>{code}</code></pre>
+        </div>
+      ))}
+      <p class="small muted" style="margin-top: 14px;">
+        The JavaScript client ships today. Godot and Dart packages are phase 2 —
+        see the <a href="/roadmap/">roadmap</a>, which says plainly what exists
+        and what does not.
+      </p>
+    </div>
+  </section>
+
+  <!-- ----------------------------------------------------------- ladder -->
+  <section class="section">
+    <div class="wrap hero">
+      <div>
+        <p class="eyebrow">The ladder</p>
+        <h2>Eleven people make a district mean something.</h2>
+        <p>
+          A global ranking needs millions of players to be interesting. A
+          district ranking needs eleven. That inverts the usual cold-start
+          problem: what is scarce is density in one place, not reach.
+        </p>
+        <p>
+          So a region only awards a title once it has enough contenders and a
+          unique winner — and a closed region opens itself when enough people
+          are waiting for it. Scarcity is code here, not marketing.
+        </p>
+        <p class="small muted">
+          Home districts are locked for the season, nothing finer than a
+          district is ever stored, and no discipline awards a title above its
+          own trust tier.
+        </p>
+      </div>
+      <div class="ladder">
+        {ladder.map(([level, name, scope, locked]) => (
+          <div class={`rung ${locked ? 'locked' : name === 'Eimsbüttel' ? 'crown' : ''}`}>
+            <span class="level">{level}</span>
+            <span class="name">{name}</span>
+            <span class="pill">{scope}</span>
+          </div>
+        ))}
+        <p class="small muted" style="margin-top: 6px;">
+          Dimmed levels are not unlocked yet. A level that does not exist is
+          more honest than a world champion with four opponents.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ---------------------------------------------------- what you skip -->
+  <section class="section">
+    <div class="wrap">
+      <p class="eyebrow">What you stop rebuilding</p>
+      <h2>Sixteen things, once, for every app you make.</h2>
+      <p class="kicker" style="margin-bottom: 30px;">
+        This list is the actual pitch. Every item is something a small team
+        writes again in each new project, gets slightly wrong, and then
+        maintains forever.
+      </p>
+      <ul class="ticks">
+        {rebuilt.map((item) => <li>{item}</li>)}
+      </ul>
+    </div>
+  </section>
+
+  <!-- ------------------------------------------------------------ proof -->
+  <section class="section">
+    <div class="wrap hero">
+      <div>
+        <p class="eyebrow">Proof, not adjectives</p>
+        <h2>Tested where it matters.</h2>
+        <p>
+          182 tests run inside the real Workers runtime against a real database,
+          plus a smoke test over HTTP against a running instance. Coverage
+          thresholds are enforced, so a regression fails the build.
+        </p>
+        <p class="small muted">
+          The tests earned their keep: they found a race in idempotent
+          submissions, a migration that opened with two dozen
+          <code>DROP TABLE</code> statements, and a duplicate title event on a
+          repeated season close.
+        </p>
+      </div>
+      <div class="grid g2">
+        <div class="card"><span class="num">97.2%</span><p>statements covered</p></div>
+        <div class="card"><span class="num">90.4%</span><p>branches covered</p></div>
+        <div class="card"><span class="num">182</span><p>tests, real runtime</p></div>
+        <div class="card"><span class="num">CC0</span><p>public domain licence</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ---------------------------------------------------------- pricing -->
+  <section class="section">
+    <div class="wrap hero">
+      <div>
+        <p class="eyebrow">Price and licence</p>
+        <h2>The software is yours. The running of it is what costs.</h2>
+        <p>
+          The code is CC0 — take it, change it, sell it, host it yourself. The
+          hosted service is billed by what it actually consumes: entries beyond
+          the free allowance, replay verification by CPU, titles above city
+          level.
+        </p>
+        <p>
+          <strong style="color: var(--text)">Never per player.</strong> A
+          per-user price punishes exactly the growth that makes the service
+          valuable, and pushes developers into avoiding accounts.
+        </p>
+        <div class="cta-row">
+          <a class="btn primary" href="/pricing/">See the pricing</a>
+        </div>
+      </div>
+      <div class="card plain">
+        <p class="quote">
+          Copy the code and you get an empty database. What you cannot copy is
+          the eleven people already in Eimsbüttel.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <script is:inline>
+    const tabs = document.querySelectorAll('.tabs button')
+    const panels = document.querySelectorAll('.tabpanel')
+    tabs.forEach((tab) =>
+      tab.addEventListener('click', () => {
+        tabs.forEach((t) => t.setAttribute('aria-selected', String(t === tab)))
+        panels.forEach((p) => {
+          p.hidden = p.dataset.panel !== tab.dataset.tab
+        })
+      }),
+    )
+  </script>
+</Base>
