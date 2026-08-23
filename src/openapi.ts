@@ -183,11 +183,24 @@ const AUTH_NOTE: Record<Auth, string> = {
 }
 
 /** Every route Hono knows about, in the same shape as the catalogue. */
+/**
+ * Routes that are not operations, and must not appear in the specification.
+ *
+ * Kept as an explicit list rather than a pattern: an exclusion nobody can see
+ * is how a real endpoint eventually slips out of the document unnoticed. If a
+ * route is here, somebody decided it is a page rather than an API call.
+ */
+const NOT_AN_OPERATION = new Set([
+  'GET /dashboard', // the developer console: HTML for a person, not JSON for a program
+])
+
 export function registeredRoutes(): string[] {
   const seen = new Set<string>()
   for (const route of (app as unknown as { routes: { method: string; path: string }[] }).routes) {
     if (route.method === 'ALL') continue
-    seen.add(`${route.method} ${route.path}`)
+    const key = `${route.method} ${route.path}`
+    if (NOT_AN_OPERATION.has(key)) continue
+    seen.add(key)
   }
   return [...seen].sort()
 }

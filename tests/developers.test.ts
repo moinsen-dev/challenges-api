@@ -376,3 +376,21 @@ describe('Audit trail', () => {
     expect(log.body.entries.every((e: any) => e.action !== 'app.created')).toBe(true)
   })
 })
+
+describe('The developer console', () => {
+  it('is served as a page by the API itself', async () => {
+    const res = await app.fetch(
+      new Request('https://api.test/dashboard'),
+      env as any,
+      { waitUntil() {}, passThroughOnException() {} } as ExecutionContext,
+    )
+    expect(res.status).toBe(200)
+    expect(res.headers.get('content-type')).toContain('text/html')
+    const html = await res.text()
+    // The page must not carry a key, a token or an origin of its own: it talks
+    // to the API it was served by, using the cookie it was given.
+    expect(html).not.toMatch(/chapi_(pk|sk)_/)
+    expect(html).toContain('/v1/dev/auth/github')
+    expect(html).toContain('noindex')
+  })
+})

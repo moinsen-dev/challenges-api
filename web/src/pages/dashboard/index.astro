@@ -1,20 +1,28 @@
 ---
 import Base from '../../layouts/Base.astro'
+import { API } from '../../instance'
 ---
 <Base title="Dashboard — Challenges API">
   <section class="wrap" style="padding-top: 48px;">
     <h1 style="font-size: 1.8rem;">Dashboard</h1>
     <p class="muted" style="max-width: 62ch;">
-      Operational view across every app. The admin key stays in your browser
-      (<code>localStorage</code>) and is sent only to the API you enter —
-      defensible for a single operator, not for a customer portal.
+      Operational view across every app, for whoever runs this instance. The
+      admin key stays in your browser (<code>localStorage</code>) and is sent
+      only to the API you enter — defensible for a single operator, and
+      deliberately not a customer portal.
+    </p>
+    <p class="muted" style="max-width: 62ch;">
+      If you are a developer rather than the operator, the page you want is the
+      <a href={API + '/dashboard'}>developer console</a>: sign in with GitHub,
+      own your apps, mint and retire your own keys. It is served by the API
+      itself, because the session is a cookie and a cookie belongs on one origin.
     </p>
 
     <div class="card" style="margin-top: 20px;">
       <div class="grid g2" style="grid-template-columns: 2fr 2fr auto; align-items: end;">
         <div>
           <label for="base">API</label>
-          <input id="base" placeholder="http://127.0.0.1:8799" />
+          <input id="base" placeholder={API} />
         </div>
         <div>
           <label for="key">Admin key</label>
@@ -92,10 +100,10 @@ import Base from '../../layouts/Base.astro'
     </div>
   </section>
 
-  <script is:inline>
+  <script is:inline define:vars={{ PROD_API: API }}>
     const $ = (id) => document.getElementById(id)
     const store = window.localStorage
-    $('base').value = store.getItem('dash.base') ?? 'http://127.0.0.1:8799'
+    $('base').value = store.getItem('dash.base') ?? PROD_API
     $('key').value = store.getItem('dash.key') ?? ''
 
     const esc = (v) => String(v ?? '').replace(/[<>&]/g, (ch) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' })[ch])

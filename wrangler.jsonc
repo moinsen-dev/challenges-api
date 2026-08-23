@@ -47,7 +47,15 @@
   // real key with a development placeholder. Local values live in `.dev.vars`.
   "vars": {
     // Where the developer console lives: the post-sign-in destination.
-    "CONSOLE_ORIGIN": "https://challenges.moinsen.dev/dashboard/",
+    //
+    // A path on this worker, not a URL on the website. The session is an
+    // httpOnly cookie, and this API answers every request with
+    // `Access-Control-Allow-Origin: *`, which a browser refuses to combine
+    // with credentials. A console on another host would need the CORS policy
+    // of the whole API loosened and the cookie widened across subdomains. On
+    // the same origin it simply works — and it keeps working on the
+    // workers.dev hostname while the zone challenges browser traffic.
+    "CONSOLE_ORIGIN": "/dashboard",
     // Who may hold a developer account here. Empty or missing means open,
     // which is what a self-hoster wants. Checked on every sign-in, and for
     // GitHub only against a VERIFIED address — a public profile email is

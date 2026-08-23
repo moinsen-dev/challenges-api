@@ -17,6 +17,7 @@ import { verify } from './routes/verify'
 import { tournaments } from './routes/tournaments'
 import { ceremony } from './routes/ceremony'
 import { meta } from './routes/meta'
+import { console_ } from './routes/console'
 
 const app = new Hono<HonoApp>()
 
@@ -85,6 +86,7 @@ app.route('/', collect)
 app.route('/', social)
 app.route('/', access)
 app.route('/', developers)
+app.route('/', console_)
 app.route('/', recovery)
 app.route('/', live)
 app.route('/', hooks)
