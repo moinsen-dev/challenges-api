@@ -250,7 +250,17 @@ identity.patch('/v1/me/region', requireApp, requirePlayer, async (c) => {
     .bind(region_id)
     .first<{ id: string; name: string; level: number }>()
   if (!region) return c.json({ error: 'unknown region' }, 404)
-  if (region.level !== 1) return c.json({ error: 'home region must be a district' }, 400)
+  // The home region has to be the finest one open at that place, not literally
+  // level 1: outside Hamburg the districts below a rural county do not exist
+  // yet, and a player there would otherwise have nowhere to live. A region with
+  // an open child is not a home — the child is.
+  const finer = await c.env.DB.prepare(
+    `SELECT id FROM regions WHERE parent_id = ? AND active = 1 LIMIT 1`,
+  )
+    .bind(region.id)
+    .first<{ id: string }>()
+  if (finer)
+    return c.json({ error: 'home region must be the finest open region here', finer: finer.id }, 400)
 
   await c.env.DB.prepare(
     `INSERT INTO player_regions (player_id, season_id, region_id, locked_at) VALUES (?, ?, ?, ?)`,

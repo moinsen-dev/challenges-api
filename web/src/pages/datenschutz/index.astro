@@ -55,9 +55,29 @@ const rights = [
     <ul class="muted">
       <li>keine E-Mail-Adresse, kein Klarname, keine Telefonnummer</li>
       <li>keine IP-Adresse in der Datenbank dieses Dienstes</li>
-      <li>keine Koordinaten, keine Anschrift — nichts feiner als ein Bezirk</li>
+      <li>keine Koordinaten, keine Anschrift — nichts feiner als ein Bezirk (siehe unten)</li>
       <li>keine Cookies, kein Tracking, keine Werbekennung, kein Fingerprint</li>
     </ul>
+    <h2>Der eine Punkt, an dem ein Standort vorkommt</h2>
+    <p class="muted">
+      <code>GET /v1/regions/resolve?lat=&amp;lon=</code> beantwortet die Frage,
+      in welchem Bezirk eine Position liegt. Die Position wird dafuer
+      entgegengenommen, gegen die Bezirksgrenzen gerechnet und danach
+      verworfen: sie wird nicht in die Datenbank geschrieben, nicht protokolliert
+      und keinem Konto zugeordnet. Der Aufruf braucht keinen Spieler, sondern nur
+      einen App-Schluessel — er laesst sich also stellen, bevor ueberhaupt ein
+      Konto existiert.
+    </p>
+    <p class="muted">
+      Gespeichert wird ausschliesslich die Bezirkskennung, die dabei
+      herauskommt, und auch die erst, wenn sie ueber
+      <code>PATCH /v1/me/region</code> ausdruecklich als Heimatbezirk gesetzt
+      wird. Ein Bezirk ist die feinste Aufloesung, die dieser Dienst kennt. Die
+      Grenzen selbst stammen von Eurostat GISCO (NUTS 2024,
+      &copy; EuroGeographics) und fuer Hamburg von OpenStreetMap
+      (&copy; OpenStreetMap-Mitwirkende, ODbL).
+    </p>
+
     <p class="muted" style="font-size: 0.92rem;">
       Der Zugangstoken liegt im <code>localStorage</code> des Geraets. Er ist zur
       Erbringung des Dienstes zwingend erforderlich und damit nach § 25 Abs. 2

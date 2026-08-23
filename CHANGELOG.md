@@ -4,6 +4,40 @@ Dates are when the work landed. Versions follow the phases in
 [`ROADMAP.md`](ROADMAP.md); the API itself is `/v1` throughout and no published
 endpoint has changed shape.
 
+## 2026-08-23
+
+### Geography, so that a district is a place — phase 2b
+
+- **`GET /v1/regions/resolve?lat=&lon=`** answers with the district a position
+  is in, its chain up to the world, and — when the district is closed — how many
+  people are still missing before it opens. The position is used and discarded:
+  it is never written to the database, never logged, never tied to an account,
+  and the call needs no player at all.
+- **Germany is imported**: 16 Bundeslaender and all 400 districts, with real
+  boundaries, plus the seven districts of Hamburg. Everything outside Hamburg
+  arrives **closed**, with a threshold of eleven. That is not caution. The
+  waitlist that opens a region by itself has existed since phase 5 and had
+  nothing to wait for — there were twelve hand-typed rows in the whole world,
+  and a client had to know a district id before it could pick one.
+- Boundaries are **not committed**. `scripts/geo-import.mjs` fetches them from
+  Eurostat GISCO (NUTS 2024, © EuroGeographics) and OpenStreetMap (ODbL) and
+  emits SQL, which keeps this repository CC0 and free of 1.8 MB of polygons.
+- **A home region is now the finest open region at that place**, not literally
+  level 1. Outside Hamburg the districts below a rural county do not exist yet,
+  and the old rule left everyone there with nowhere to live.
+- `GET /v1/waitlist` is capped and reports a total. It used to return everything
+  closed, which was nothing before this and four hundred regions after it.
+- The console in the docs asks the browser where it is instead of offering the
+  one district it knew.
+
+Two things were measured rather than assumed, and both were wrong on the first
+attempt. Ordering candidate regions by the size of their bounding box resolves
+the Hamburg town hall to Hamburg rather than to Hamburg-Mitte, because that
+district reaches out to Neuwerk in the North Sea and its box is therefore wider
+than the city's; the fix is to order **rings**, which have no exclaves. And
+Berlin resolved to its Bundesland rather than to its district, because a city
+state is one boundary filed twice with a box identical to the last decimal.
+
 ## 2026-08-22
 
 Everything below happened on one day, which is why the entries read as phases

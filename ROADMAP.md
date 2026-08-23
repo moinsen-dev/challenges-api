@@ -73,6 +73,13 @@ Four clients are built and tested end to end against a real instance:
 All four refuse a `chapi_sk_` key outright, because a secret key in a client is
 a mistake that ships to every device.
 
+Since 2026-08-23 the ladder also has a geography: `/v1/regions/resolve` turns a
+position into a district, Germany is imported down to its 400 districts, and
+everything outside Hamburg is closed until eleven people wait for it. Before
+that a client had to know a district id in order to pick one, and the only ids
+that existed were seven Hamburg districts — which made an honest integration
+outside this city impossible.
+
 What remains before this phase closes:
 
 - Publish to npm, the Godot Asset Library and pub.dev under stable names.

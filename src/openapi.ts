@@ -93,6 +93,7 @@ export const CATALOGUE: Entry[] = [
   // ---------------------------------------------------------------- access
   ['POST', '/v1/me/invites', 'player', 'Access', 'Spend one invite from your own allowance'],
   ['GET', '/v1/me/invites', 'player', 'Access', 'Invite allowance and who joined through you'],
+  ['GET', '/v1/regions/resolve', 'app', 'Access', 'A position becomes a district; the position itself is not stored'],
   ['POST', '/v1/waitlist/:region', 'player', 'Access', 'Wait for a closed region; it opens itself at its threshold'],
   ['GET', '/v1/waitlist', 'app', 'Access', 'Closed regions, ordered by demand'],
 

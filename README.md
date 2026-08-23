@@ -89,6 +89,7 @@ against a real instance — the Godot one headless, the Dart one with `dart test
 | **Four aggregations** | `best`, `sum`, `count`, `streak` — one field on a discipline decides whether you run a high-score game or a habit tracker. |
 | **Qualification as a gate** | A player enters the ranked world by passing a single-player exam. Keeps throwaway accounts and dead weight off the board. |
 | **Geographic titles** | District → city → state → country → continent → world. A region only awards a title with enough contenders **and** a unique winner. |
+| **Real geography** | `GET /v1/regions/resolve?lat=&lon=` answers with the district a position is in. The position is used and discarded; only the district is ever stored. Germany is imported down to its 400 districts, everything outside Hamburg closed until eleven people wait for it. |
 | **Async challenges** | Score attack between two people, decided only by performance after acceptance. No netcode, works for single-player games. |
 | **Head-to-head + Glicko-2** | Server-reported duels with a rating tested against Glickman's published reference example. |
 | **Badges and collections** | Declarative rules evaluated against the ledger — including rules that span several apps. Always cosmetic. |
@@ -154,3 +155,16 @@ a rebuild from the ledger is always possible.
 
 [CC0 1.0 Universal](LICENSE). Rationale — including why "public domain" alone
 does not work under German law — in [`legal/LIZENZ.md`](legal/LIZENZ.md).
+
+The boundaries behind `/v1/regions/resolve` are not part of this repository and
+carry their own terms. `scripts/geo-import.mjs` fetches them at import time and
+writes them straight into the database, which is why nothing here is covered by
+anything but CC0:
+
+- Bundesländer and districts: **© EuroGeographics** for the administrative
+  boundaries, from [Eurostat GISCO](https://ec.europa.eu/eurostat/web/gisco),
+  NUTS 2024. Free to reuse, attribution required.
+- The seven districts of Hamburg: **© OpenStreetMap contributors**, available
+  under the [Open Database Licence](https://www.openstreetmap.org/copyright).
+  Hamburg is one single region at every European level, so its districts have
+  no NUTS code and come from OSM instead.

@@ -20,3 +20,6 @@ notes/
 # and wrong on anyone else's machine.
 .dart_tool/
 .godot/
+
+# Generated boundary import, see scripts/geo-import.mjs
+.geo/

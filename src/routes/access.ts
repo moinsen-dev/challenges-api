@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
 import { HonoApp, id, now, record, requireAdmin, requireApp, requireAppSecret, requirePlayer, secret, sha256 } from '../lib'
+import { regionChain, resolveRegion } from '../geo'
 
 export const access = new Hono<HonoApp>()
 
@@ -136,14 +137,69 @@ access.post('/v1/waitlist/:region', requireApp, requirePlayer, async (c) => {
   )
 })
 
-access.get('/v1/waitlist', requireApp, async (c) => {
-  const rows = await c.env.DB.prepare(
-    `SELECT r.id, r.name, r.level, r.unlock_threshold,
-            (SELECT COUNT(*) FROM region_waitlist w WHERE w.region_id = r.id) AS waiting
-       FROM regions r WHERE r.active = 0
-      ORDER BY waiting DESC, r.name`,
-  ).all<{ unlock_threshold: number; waiting: number }>()
+/**
+ * A position becomes a district, and nothing about the position is kept.
+ *
+ * This is the endpoint that makes the ladder usable anywhere: without it a
+ * client has to know a region id before it can pick one, which in practice
+ * meant the seven Hamburg districts. The answer says plainly whether the
+ * district is open, and if it is not, how many people are still missing —
+ * that number is the whole invitation to join the waitlist.
+ */
+access.get('/v1/regions/resolve', requireApp, async (c) => {
+  const lat = Number(c.req.query('lat'))
+  const lon = Number(c.req.query('lon'))
+  if (!Number.isFinite(lat) || !Number.isFinite(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180)
+    return c.json({ error: 'lat and lon are required and must be a position on earth' }, 400)
+
+  const region = await resolveRegion(c.env.DB, lat, lon)
+  if (!region)
+    return c.json({ error: 'no region covers this position', covered: 'Deutschland' }, 404)
+
+  const chain = await regionChain(c.env.DB, region.id)
+  if (region.active)
+    return c.json({ region: { id: region.id, name: region.name, level: region.level }, chain, open: true })
+
+  const waiting =
+    (
+      await c.env.DB.prepare(`SELECT COUNT(*) AS n FROM region_waitlist WHERE region_id = ?`)
+        .bind(region.id)
+        .first<{ n: number }>()
+    )?.n ?? 0
   return c.json({
+    region: { id: region.id, name: region.name, level: region.level },
+    chain,
+    open: false,
+    waiting,
+    threshold: region.unlock_threshold,
+    missing: Math.max(0, region.unlock_threshold - waiting),
+    // The nearest open ancestor is where this player competes until then.
+    competes_in: chain.find((r) => r.active === 1)?.id ?? null,
+  })
+})
+
+/**
+ * The regions that could open, in the order they are closest to opening.
+ *
+ * This used to return everything closed, which was nothing until Germany was
+ * imported and is four hundred regions since. The list is capped: what a client
+ * shows is the near misses, and the count says how much is behind them.
+ */
+access.get('/v1/waitlist', requireApp, async (c) => {
+  const limit = Math.min(Math.max(Number(c.req.query('limit')) || 50, 1), 200)
+  const [rows, total] = await Promise.all([
+    c.env.DB.prepare(
+      `SELECT r.id, r.name, r.level, r.unlock_threshold,
+              (SELECT COUNT(*) FROM region_waitlist w WHERE w.region_id = r.id) AS waiting
+         FROM regions r WHERE r.active = 0
+        ORDER BY waiting DESC, r.name LIMIT ?`,
+    )
+      .bind(limit)
+      .all<{ unlock_threshold: number; waiting: number }>(),
+    c.env.DB.prepare(`SELECT COUNT(*) AS n FROM regions WHERE active = 0`).first<{ n: number }>(),
+  ])
+  return c.json({
+    closed: total?.n ?? 0,
     regions: rows.results.map((r) => ({
       ...r,
       missing: Math.max(0, r.unlock_threshold - r.waiting),

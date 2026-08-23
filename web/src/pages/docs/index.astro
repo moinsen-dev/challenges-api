@@ -20,6 +20,7 @@ const groups = [
       ['GET', '/v1/me', 'profile, qualifications, badges, titles'],
       ['GET', '/v1/me/export', 'complete data export'],
       ['DELETE', '/v1/me', 'irreversible deletion'],
+      ['GET', '/v1/regions/resolve', '?lat= ?lon= — which district a position is in'],
       ['PATCH', '/v1/me/region', 'home district, locked for the season'],
       ['PATCH', '/v1/me/profile', 'display name, avatar, locale, featured title or badge'],
       ['PATCH', '/v1/me/handle', 'change handle, 30-day lock afterwards'],
@@ -146,7 +147,8 @@ const response = `{
         <div class="grid" style="gap: 10px;">
           <div style="display: flex; flex-wrap: wrap; gap: 8px;">
             <button class="btn" data-try="signin">Create an account</button>
-            <button class="btn" data-try="region">Choose Eimsbüttel</button>
+            <button class="btn" data-try="locate">Find my district</button>
+            <button class="btn" data-try="region">Move in</button>
             <button class="btn" data-try="submit">Submit a score</button>
             <button class="btn" data-try="board">Read the leaderboard</button>
             <button class="btn" data-try="around">Where am I?</button>
@@ -339,6 +341,9 @@ const response = `{
       return parsed
     }
 
+    // Until someone presses "Find my district", the console lives in Eimsbüttel.
+    let home = 'hh-eimsbuettel'
+
     const refreshWho = async () => {
       const token = store.getItem(KEY)
       if (!token) { who.textContent = 'Not signed in.' ; return }
@@ -358,14 +363,34 @@ const response = `{
         if (created.token) store.setItem(KEY, created.token)
         refreshWho()
       },
-      region: () => api('PATCH', '/v1/me/region', { region_id: 'hh-eimsbuettel' }).then(refreshWho),
+      /**
+       * The browser is asked for a position, the service is asked which
+       * district that is, and the position is then gone. Nothing sends a
+       * coordinate anywhere but to this one call, and that call stores none.
+       */
+      async locate() {
+        const at = await new Promise((resolve, reject) =>
+          navigator.geolocation
+            ? navigator.geolocation.getCurrentPosition(
+                (p) => resolve({ lat: p.coords.latitude, lon: p.coords.longitude }),
+                () => reject(new Error('no position — using the Hamburg town hall instead')),
+                { timeout: 8000 },
+              )
+            : reject(new Error('this browser has no geolocation — using the Hamburg town hall instead')),
+        ).catch((error) => ({ lat: 53.5503, lon: 9.992, note: error.message }))
+        const found = await api('GET', `/v1/regions/resolve?lat=${at.lat.toFixed(4)}&lon=${at.lon.toFixed(4)}`)
+        if (at.note) out.firstChild.textContent = at.note + '\n\n' + out.firstChild.textContent
+        if (found.region) home = found.region.id
+        refreshWho()
+      },
+      region: () => api('PATCH', '/v1/me/region', { region_id: home }).then(refreshWho),
       submit: () =>
         api('POST', '/v1/entries', {
           discipline: DISCIPLINE,
           value: Math.floor(Math.random() * 900) + 100,
         }),
-      board: () => api('GET', `/v1/leaderboards/${DISCIPLINE}?region=hh-eimsbuettel&limit=5`),
-      around: () => api('GET', `/v1/leaderboards/${DISCIPLINE}/around?region=hh-eimsbuettel`),
+      board: () => api('GET', `/v1/leaderboards/${DISCIPLINE}?region=${home}&limit=5`),
+      around: () => api('GET', `/v1/leaderboards/${DISCIPLINE}/around?region=${home}`),
       async reset() {
         await api('DELETE', '/v1/me')
         store.removeItem(KEY)
