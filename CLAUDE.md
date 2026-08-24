@@ -73,9 +73,20 @@ cd web && npm run build && npx wrangler pages deploy dist --project-name challen
   disallowed by embedder`). That is why the verifier is a separate process. Side
   effect: `wabt` is itself WASM, so test fixtures are precompiled in Node by
   `scripts/build-test-wasm.mjs`.
-- **Bot Fight Mode on the `moinsen.dev` zone** challenges non-browser requests —
-  and as of 2026-08-22 it interstitials the *website* too. `workers_dev` stays
-  enabled for exactly this reason. Zone-wide setting, so it is Uli's call.
+- **The `moinsen.dev` zone challenges non-browser requests.** Measured again on
+  2026-08-24, after a skip rule was added for `challenges-api.moinsen.dev`: a
+  human browser passes, and curl, `GodotEngine/4.3` and `Dart/3.13 (dart:io)`
+  all still get **403** with `cf-mitigated: challenge`. That is the wrong way
+  round for an API — a game is not a browser. So the custom domain may carry
+  the console, but **the API endpoint we publish is the `workers.dev` one**,
+  which answers 200 to every caller. That is why `workers_dev` stays enabled
+  and why `web/src/instance.ts` points where it does. Zone-wide setting, so the
+  rest is Uli's call.
+- **A browser we drive cannot prove a human is blocked by that challenge.** A
+  CDP-driven Chrome sat on the interstitial for 22 seconds while Uli signed in
+  through the same host without trouble; Cloudflare sees `navigator.webdriver`.
+  Before concluding a challenged host is broken for people, have a person click
+  it — the automated result only ever proves the automated case.
 - **Godot:** `project.godot` must sit at the project root or headless hangs;
   GDScript cannot infer a type from `await` (`var x := await f()` is a parse
   error); `--import` must run once for `class_name` registration.
