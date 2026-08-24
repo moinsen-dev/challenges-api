@@ -251,3 +251,45 @@ describe('JavaScript client', () => {
     expect((await client.waitlist.regions()).regions.some((r) => r.id === regionId)).toBe(true)
   })
 })
+
+describe('Resolving a district from the client', () => {
+  it('answers with the district and whether it is open', async () => {
+    const keys = await makeApp()
+    // A world of one open square, so this does not depend on the geo import.
+    await env.DB.prepare(
+      `INSERT INTO regions (id, parent_id, level, name, active, unlock_threshold, source)
+       VALUES ('sdk-box', 'hh-city', 1, 'SDK Box', 1, 0, 'test')
+       ON CONFLICT(id) DO NOTHING`,
+    ).run()
+    await env.DB.prepare(
+      `INSERT INTO region_shapes (region_id, part, min_lat, min_lon, max_lat, max_lon, area, ring)
+       VALUES ('sdk-box', 0, 40, 40, 41, 41, 1, ?)
+       ON CONFLICT (region_id, part) DO NOTHING`,
+    )
+      .bind(JSON.stringify([[40, 40], [41, 40], [41, 41], [40, 41], [40, 40]]))
+      .run()
+
+    const keysClient = createClient({
+      baseUrl: 'https://api.test',
+      appKey: keys.public_key,
+      fetch: localFetch,
+      store: memoryStore(),
+    })
+    // Never signed in: the call takes an app key and nothing else.
+    const found = await keysClient.resolveRegion(40.5, 40.5)
+    expect(found.region.id).toBe('sdk-box')
+    expect(found.open).toBe(true)
+    expect(found.chain.map((r) => r.id)).toContain('hh-city')
+  })
+
+  it('says plainly when the ladder does not reach a position', async () => {
+    const keys = await makeApp()
+    const client = createClient({
+      baseUrl: 'https://api.test',
+      appKey: keys.public_key,
+      fetch: localFetch,
+      store: memoryStore(),
+    })
+    await expect(client.resolveRegion(-70, -170)).rejects.toThrow(ChallengesError)
+  })
+})

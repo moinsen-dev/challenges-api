@@ -250,6 +250,28 @@ export function createClient(options: ClientOptions) {
         collections: { slug: string; name: string }[]
       }>('GET', '/v1/catalog'),
 
+    /**
+     * Which district a position is in.
+     *
+     * The position is sent once and kept by nobody: the service does not store
+     * it, and this client does not either. What comes back is a district id you
+     * can hand to `chooseRegion`, plus — when that district is not open yet —
+     * how many people are still waiting for it to open.
+     *
+     * Needs no signed-in player, so a game may ask before anybody has an
+     * account.
+     */
+    resolveRegion: (lat: number, lon: number) =>
+      call<{
+        region: { id: string; name: string; level: number }
+        chain: { id: string; name: string; level: number; active: number }[]
+        open: boolean
+        waiting?: number
+        threshold?: number
+        missing?: number
+        competes_in?: string | null
+      }>('GET', `/v1/regions/resolve?lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}`),
+
     chooseRegion: (regionId: string) =>
       call<{ region: { id: string; name: string }; locked_until: string }>('PATCH', '/v1/me/region', {
         region_id: regionId,
