@@ -18,7 +18,7 @@ const aggregations = [
 
 const ladder = [
   ['Level 1', 'Eimsbüttel', 'district', false],
-  ['Level 2', 'Hamburg', 'city', false],
+  ['Level 2', 'Hamburg', 'city or county', false],
   ['Level 3', 'Hamburg', 'state', true],
   ['Level 4', 'Germany', 'country', true],
   ['Level 5', 'Europe', 'continent', true],
@@ -248,10 +248,33 @@ me.rank.region; // (rank: 2, of: 19)`,
           </div>
         ))}
         <p class="small muted" style="margin-top: 6px;">
-          Dimmed levels are not unlocked yet. A level that does not exist is
-          more honest than a world champion with four opponents.
+          Every level exists; the dimmed ones award nothing. A discipline states
+          how high its titles may go, and no region crowns anybody below its
+          minimum. No world champion with four opponents.
         </p>
       </div>
+    </div>
+  </section>
+
+  <!-- -------------------------------------------------------- geography -->
+  <section class="section">
+    <div class="wrap narrow">
+      <p class="eyebrow">Where somebody is</p>
+      <h2>A district is a place, not a dropdown.</h2>
+      <p>
+        Ask <code>GET /v1/regions/resolve?lat=&amp;lon=</code> and you get the
+        district that position is in, its chain up to the world, and — if that
+        district is not open yet — how many people are still missing. Germany is
+        in: sixteen states, all four hundred counties, the seven districts of
+        Hamburg. Everything outside Hamburg starts closed and opens itself once
+        eleven people are waiting for it.
+      </p>
+      <p class="small muted">
+        The position is used and thrown away. It is not stored, not logged, not
+        tied to an account, and the call needs no player at all — a game can ask
+        before anybody has signed up. The district is the finest thing this
+        service ever keeps.
+      </p>
     </div>
   </section>
 
@@ -321,8 +344,8 @@ me.rank.region; // (rank: 2, of: 19)`,
       </div>
       <div class="card plain">
         <p class="quote">
-          Copy the code and you get an empty database. What you cannot copy is
-          the eleven people already in Eimsbüttel.
+          Copy the code and you get an empty database. Eleven people who show up
+          in the same district is the part that is not engineering.
         </p>
       </div>
     </div>

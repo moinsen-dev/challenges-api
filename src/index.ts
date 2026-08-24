@@ -38,6 +38,7 @@ app.get('/v1/status', (c) =>
     capabilities: [
       'identity',
       'regions',
+      'geo-resolve',
       'entries',
       'aggregations:best,sum,count,streak',
       'qualifications',

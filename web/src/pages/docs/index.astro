@@ -1,6 +1,7 @@
 ---
 import Base from '../../layouts/Base.astro'
 import { API, SANDBOX_KEY } from '../../instance'
+import { CATALOGUE } from '../../../../src/catalogue'
 
 const auth = [
   ['X-App-Key: pk_...', 'any client', 'accounts, catalog, entries, leaderboards, social'],
@@ -9,85 +10,40 @@ const auth = [
   ['X-Admin-Key', 'the operator', 'apps, regions, seasons, moderation, retention'],
 ]
 
-const groups = [
-  {
-    title: 'Client', auth: 'X-App-Key: pk_… + Bearer',
-    note: 'Everything that may live in a browser or a game build.',
-    rows: [
-      ['POST', '/v1/auth/anonymous', 'account in one call (invite_code when the app is closed)'],
-      ['POST', '/v1/me/link-code', 'one-time code to move the identity'],
-      ['POST', '/v1/auth/redeem', 'redeem it on another device or app'],
-      ['GET', '/v1/me', 'profile, qualifications, badges, titles'],
-      ['GET', '/v1/me/export', 'complete data export'],
-      ['DELETE', '/v1/me', 'irreversible deletion'],
-      ['GET', '/v1/regions/resolve', '?lat= ?lon= — which district a position is in'],
-      ['PATCH', '/v1/me/region', 'home district, locked for the season'],
-      ['PATCH', '/v1/me/profile', 'display name, avatar, locale, featured title or badge'],
-      ['PATCH', '/v1/me/handle', 'change handle, 30-day lock afterwards'],
-      ['GET', '/v1/catalog', 'disciplines, regions, season, collections'],
-      ['POST', '/v1/entries', 'submit an entry'],
-      ['GET', '/v1/disciplines/:d/me', 'own value, rank, streak, exam status'],
-      ['GET', '/v1/leaderboards/:d', '?region= ?scope=friends ?limit='],
-      ['GET', '/v1/daily/:d', 'the day seed, identical worldwide'],
-      ['POST', '/v1/challenges', 'create an async challenge'],
-      ['POST', '/v1/challenges/:id/accept', 'accept one'],
-      ['GET', '/v1/challenges', 'your challenges'],
-      ['GET', '/v1/ratings/:d', 'rating list'],
-      ['GET', '/v1/collections/:slug', 'a collection with your holdings'],
-      ['POST', '/v1/me/follows/:handle', 'follow a rival'],
-      ['POST', '/v1/me/blocks/:handle', 'block a person'],
-      ['POST', '/v1/reports', 'report a person'],
-      ['POST', '/v1/waitlist/:region', 'wait for a closed region'],
-      ['GET', '/v1/events', 'event stream (?since=)'],
-    ],
-  },
-  {
-    title: 'Developer', auth: 'X-App-Key: sk_…',
-    note: 'Everything that carries authority. Belongs on a server, never in a client.',
-    rows: [
-      ['POST', '/v1/disciplines', 'aggregation, trust tier, exam bar, title reach'],
-      ['POST', '/v1/badges', 'a badge scoped to your app'],
-      ['POST', '/v1/collections', 'create a collection'],
-      ['POST', '/v1/collections/:slug/items', 'define collectibles'],
-      ['POST', '/v1/collections/:slug/grant', 'grant one to a player'],
-      ['POST', '/v1/matches', 'duel result with placements, updates Glicko-2'],
-      ['POST', '/v1/invites', 'invite codes, shown exactly once'],
-    ],
-  },
-  {
-    title: 'Developer console', auth: 'session cookie',
-    note: 'Sign-in authenticates the console, never an API request. A game presents a key and nothing else, so an outage at the sign-in provider cannot take a game down.',
-    rows: [
-      ['GET', '/v1/dev/auth/github', 'start GitHub sign-in (?redirect= back to your console)'],
-      ['POST', '/v1/dev/auth/email', 'send a magic link and a six-digit code'],
-      ['POST', '/v1/dev/auth/email/verify', 'the code, when the mail opens on another device'],
-      ['GET', '/v1/dev/me', 'account, two-factor status, app quota'],
-      ['GET', '/v1/dev/sessions', 'list sessions; revoke-others ends the rest'],
-      ['POST', '/v1/dev/apps', 'create your own app, keys included'],
-      ['GET', '/v1/dev/apps/:slug/keys', 'prefix, name, last used, expiry, revocation'],
-      ['POST', '/v1/dev/apps/:slug/keys', 'mint a key (kind, name, expires_in_days)'],
-      ['POST', '/v1/dev/keys/:id/revoke', 'revoke one, with a reason'],
-      ['GET', '/v1/dev/audit', 'what you did, in order'],
-    ],
-  },
-  {
-    title: 'Operator', auth: 'X-Admin-Key',
-    note: 'Platform operations: apps, regions, seasons, moderation, retention.',
-    rows: [
-      ['POST', '/v1/admin/apps', 'create an app, both keys shown once'],
-      ['PATCH', '/v1/admin/apps/:slug', 'access mode, invite allowance'],
-      ['GET', '/v1/admin/apps/:slug', 'disciplines, activity, review cases'],
-      ['POST', '/v1/admin/regions', 'unlock a region, optionally closed with a threshold'],
-      ['POST', '/v1/admin/regions/:id/unlock', 'open it and notify the waitlist'],
-      ['GET', '/v1/admin/regions/density', 'contenders per region (?season=)'],
-      ['POST', '/v1/admin/seasons/:id/close', 'award titles, open the next (?dry_run=1)'],
-      ['POST', '/v1/admin/entries/:id/review', 'decide a held entry'],
-      ['GET', '/v1/admin/reports', 'moderation queue'],
-      ['POST', '/v1/admin/reports/:id/resolve', 'rename, suspend or ban'],
-      ['POST', '/v1/admin/maintenance', 'retention sweep (?dry_run=1)'],
-    ],
-  },
-]
+/**
+ * The endpoint tables are grouped from `src/catalogue.ts` — the same list the
+ * OpenAPI document is built from, and the one a test compares against the
+ * router in both directions. This page used to keep its own copy under a
+ * heading reading "Everything under /v1"; by the time anybody counted it was
+ * showing 53 of 125. A second list of the same thing is a promise nobody keeps.
+ */
+const AUDIENCE = {
+  public: ['Open', 'No key at all.'],
+  app: ['Client', 'An app key, public or secret. Safe in a game build.'],
+  player: ['Player', 'An app key plus a signed-in player. Anything tied to a person.'],
+  secret: ['Server', 'The secret app key. Belongs on your server, never in a client.'],
+  developer: ['Console', 'A developer session cookie. Your account, your apps, your keys.'],
+  admin: ['Operator', 'The admin key. Whoever runs this instance, across every app.'],
+}
+
+const ORDER = ['public', 'app', 'player', 'secret', 'developer', 'admin']
+
+const groups = ORDER.map((auth) => {
+  const rows = CATALOGUE.filter(([, , entryAuth]) => entryAuth === auth)
+  const [title, note] = AUDIENCE[auth]
+  return {
+    title,
+    auth,
+    note,
+    tags: [...new Set(rows.map(([, , , tag]) => tag))].map((tag) => ({
+      tag,
+      rows: rows.filter(([, , , entryTag]) => entryTag === tag),
+    })),
+    count: rows.length,
+  }
+}).filter((group) => group.count > 0)
+
+const total = CATALOGUE.length
 
 const request = `POST /v1/entries
 X-App-Key: pk_live_...
@@ -118,7 +74,7 @@ const response = `{
   <section class="section first">
     <div class="wrap narrow">
       <p class="eyebrow">Documentation</p>
-      <h1 style="font-size: clamp(2.2rem, 5vw, 3.2rem);">Everything under <code style="font-size: 0.6em">/v1</code>.</h1>
+      <h1 style="font-size: clamp(2.2rem, 5vw, 3.2rem);">All {total} operations under <code style="font-size: 0.6em">/v1</code>.</h1>
       <p class="lead">
         Responses are JSON. Errors carry an <code>error</code> field in plain
         words, not a code you have to look up.
@@ -226,21 +182,24 @@ const response = `{
   {groups.map((group) => (
     <section class="section">
       <div class="wrap narrow">
-        <h2>{group.title} <span class="pill">{group.auth}</span></h2>
+        <h2>{group.title} <span class="pill">{group.count}</span></h2>
         <p class="kicker" style="margin-bottom: 18px;">{group.note}</p>
-        <div class="scroll">
-          <table>
-            <tbody>
-              {group.rows.map(([method, path, purpose]) => (
-                <tr>
-                  <td class="mono muted" style="width: 74px;">{method}</td>
-                  <td class="mono">{path}</td>
-                  <td class="muted">{purpose}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        {group.tags.map((section) => (
+          <div class="scroll" style="margin-bottom: 10px;">
+            <table>
+              <tbody>
+                <tr><td colspan="3" class="muted small" style="padding-top: 14px;">{section.tag}</td></tr>
+                {section.rows.map(([method, path, , , summary]) => (
+                  <tr>
+                    <td class="mono muted" style="width: 74px;">{method}</td>
+                    <td class="mono">{path}</td>
+                    <td class="muted">{summary}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ))}
       </div>
     </section>
   ))}

@@ -50,7 +50,7 @@ against a sandbox app on that instance, and the
 
 ```bash
 npm install
-npm test          # 443 tests + Godot and Dart client suites in the real Workers runtime + a live smoke test
+npm test          # 462 tests + Godot and Dart client suites in the real Workers runtime + a live smoke test
 npm run dev       # local worker on :8799
 ```
 
@@ -102,7 +102,7 @@ against a real instance — the Godot one headless, the Dart one with `dart test
 | **Live** | SSE with resumption, presence, a matchmaking queue that never double-books a player, HMAC join tickets a match server verifies offline, and signed webhooks with retries. |
 | **A read path that scales** | Materialised standings, rank by counting rather than sorting, cursor paging, and a neighbourhood endpoint. At 20,000 players, rank 19,997 answers as fast as rank 4. |
 | **Recovery that stores nothing extra** | Passkeys with real signature verification, visible sessions, and an optional rescue address. Losing a phone no longer loses the titles. |
-| **Developer accounts** | Sign in with GitHub or an emailed link, self-service apps, keys with rotation, expiry, revocation and last-used — and sign-in never sits on the request path of the API. |
+| **Developer accounts** | Sign in with GitHub or an emailed link, self-service apps, keys with rotation, expiry, revocation and last-used — and sign-in never sits on the request path of the API. The console is served by the API itself at `/dashboard`, because the session is a cookie and a cookie belongs on one origin. |
 | **GDPR built in** | Full export and irreversible deletion as endpoints; retention limits enforced in code, not in a policy document. |
 
 ## The five rules
@@ -128,7 +128,7 @@ discipline declares who vouches for a result — and the ladder is capped by it.
 ## Tests
 
 ```
-Statements   96.9 %      443 tests inside the Workers runtime, against real D1
+Statements   96.9 %      462 tests inside the Workers runtime, against real D1
 Branches     88.4 %      plus a live smoke test over HTTP
 Functions    96.5 %      coverage thresholds enforced in vitest.config.ts
 Lines        99.1 %

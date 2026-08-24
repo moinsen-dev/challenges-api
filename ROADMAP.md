@@ -17,10 +17,15 @@ minimum contenders and unique-winner rules · badges with a composable rule
 engine · collections · daily seeds · event stream · profiles · rivals and a
 friends leaderboard · blocks · reports and moderation · invites · waitlists
 that open a region by themselves · GDPR export and deletion · retention limits ·
-developer accounts with GitHub and email-link sign-in · API keys as first-class
-objects with rotation, expiry, revocation and last-used · self-service app
-creation · an audit trail · tournaments · ghosts · title cards · an OpenAPI
-description checked against the router · 443 tests at 97 % statement coverage.
+developer accounts with GitHub and email-link sign-in · a developer console
+served by the API itself · API keys as first-class objects with rotation,
+expiry, revocation and last-used · self-service app creation · an audit trail ·
+passkeys and account recovery · presence, a matchmaking queue and join tickets ·
+a server-sent event stream · webhooks with retries · replay verification with
+usage metering · tournaments · ghosts · title cards · districts resolved from a
+position, with Germany imported and closed regions that open themselves · an
+OpenAPI description checked against the router, and a documentation page built
+from the same list · 462 tests at 97 % statement coverage.
 
 ---
 
