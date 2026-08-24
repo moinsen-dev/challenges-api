@@ -103,6 +103,7 @@ against a real instance — the Godot one headless, the Dart one with `dart test
 | **A read path that scales** | Materialised standings, rank by counting rather than sorting, cursor paging, and a neighbourhood endpoint. At 20,000 players, rank 19,997 answers as fast as rank 4. |
 | **Recovery that stores nothing extra** | Passkeys with real signature verification, visible sessions, and an optional rescue address. Losing a phone no longer loses the titles. |
 | **Developer accounts** | Sign in with GitHub or an emailed link, self-service apps, keys with rotation, expiry, revocation and last-used — and sign-in never sits on the request path of the API. The console is served by the API itself at `/dashboard`, because the session is a cookie and a cookie belongs on one origin. |
+| **Usage you can check** | Entries per month against the free allowance, verified runs and the CPU they cost, titles above city level. A completed day is frozen once and never recomputed, so erasure cannot rewrite a month that was already reported. Nothing is charged — no rate is switched on. |
 | **GDPR built in** | Full export and irreversible deletion as endpoints; retention limits enforced in code, not in a policy document. |
 
 ## The five rules

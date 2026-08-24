@@ -138,6 +138,7 @@ export const CATALOGUE: Entry[] = [
   ['GET', '/v1/dev/apps/:slug/keys', 'developer', 'Console', 'Keys, with last use and revocation'],
   ['POST', '/v1/dev/apps/:slug/keys', 'developer', 'Console', 'Mint a key; rotation happens without a gap'],
   ['POST', '/v1/dev/keys/:id/revoke', 'developer', 'Console', 'Revoke a key, never the last of its kind'],
+  ['GET', '/v1/dev/apps/:slug/usage', 'developer', 'Console', 'This month against the free allowance; nothing is charged'],
   ['GET', '/v1/dev/audit', 'developer', 'Console', 'What this developer did, in order'],
 
   // -------------------------------------------------------------- operator

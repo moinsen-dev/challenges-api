@@ -142,6 +142,34 @@ const PAGE = String.raw`<!doctype html>
       </div>
     </div>
 
+    <div id="usagesection" class="hidden">
+      <h2 id="usagetitle">This month</h2>
+      <div class="card">
+        <div class="row" style="gap:26px; align-items:flex-end;">
+          <div>
+            <p class="muted small" style="margin:0;">Entries</p>
+            <div style="font-size:1.7rem; font-family:var(--mono);" id="uEntries">—</div>
+          </div>
+          <div>
+            <p class="muted small" style="margin:0;">Free allowance</p>
+            <div style="font-size:1.7rem; font-family:var(--mono); color:var(--muted);" id="uAllow">—</div>
+          </div>
+          <div>
+            <p class="muted small" style="margin:0;">Verified runs</p>
+            <div style="font-size:1.7rem; font-family:var(--mono);" id="uRuns">—</div>
+          </div>
+          <div>
+            <p class="muted small" style="margin:0;">Titles above city</p>
+            <div style="font-size:1.7rem; font-family:var(--mono);" id="uTitles">—</div>
+          </div>
+        </div>
+        <div id="uBar" style="height:6px; background:var(--panel-2); border-radius:999px; margin-top:16px; overflow:hidden;">
+          <div id="uFill" style="height:100%; width:0; background:var(--gold);"></div>
+        </div>
+        <p class="muted small" style="margin:12px 0 0;" id="uNote"></p>
+      </div>
+    </div>
+
     <div id="keysection" class="hidden">
       <h2 id="keystitle">Keys</h2>
       <div class="scroll card" style="padding:14px 20px;">
@@ -270,6 +298,7 @@ async function loadApps() {
 async function loadKeys(slug) {
   clearFail()
   currentApp = slug
+  await loadUsage(slug)
   const { keys } = await api('GET', '/v1/dev/apps/' + encodeURIComponent(slug) + '/keys')
   $('keysection').classList.remove('hidden')
   $('keystitle').textContent = 'Keys · ' + slug
@@ -301,6 +330,25 @@ async function loadKeys(slug) {
         await loadKeys(currentApp); await loadAudit()
       } catch (error) { fail(error.message) }
     }))
+}
+
+async function loadUsage(slug) {
+  const u = await api('GET', '/v1/dev/apps/' + encodeURIComponent(slug) + '/usage')
+  $('usagesection').classList.remove('hidden')
+  $('usagetitle').textContent = 'This month · ' + u.month
+  // The page is written in English; 100.000 reads as a hundred to half its readers.
+  const n = (v) => v.toLocaleString('en-US')
+  $('uEntries').textContent = n(u.entries.counted)
+  $('uAllow').textContent = n(u.entries.allowance)
+  $('uRuns').textContent = n(u.verification.runs)
+  $('uTitles').textContent = n(u.titles_above_city)
+  const share = Math.min(100, (u.entries.counted / u.entries.allowance) * 100)
+  $('uFill').style.width = share.toFixed(1) + '%'
+  $('uFill').style.background = u.entries.over > 0 ? 'var(--bad)' : 'var(--gold)'
+  $('uNote').textContent = u.entries.over > 0
+    ? n(u.entries.over) + ' entries above the free allowance. No rate is switched on, so this is a number, not a bill.'
+    : n(u.entries.allowance - u.entries.counted) + ' entries left this month, and ' +
+      (u.verification.cpu_ms ? n(u.verification.cpu_ms) + ' ms of verification CPU used.' : 'no verification used.')
 }
 
 async function loadAudit() {

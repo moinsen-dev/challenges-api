@@ -2,6 +2,7 @@ import { Hono } from 'hono'
 import { getCookie, setCookie, deleteCookie } from 'hono/cookie'
 import type { Context, Next } from 'hono'
 import { HonoApp, audit, id, mintKey, now, secret, sha256, KEY_PREFIX } from '../lib'
+import { usageForMonth } from '../usage'
 
 export const developers = new Hono<HonoApp>()
 
@@ -678,6 +679,21 @@ developers.post('/v1/dev/keys/:id/revoke', requireDeveloper, async (c) => {
     reason: reason ?? null,
   })
   return c.json({ id: key.id, revoked: true })
+})
+
+/**
+ * What this app has consumed this month, against the free allowance.
+ *
+ * Every line the pricing page meters, as a number the owner can look at. It
+ * charges nothing — there is no rate switched on — but "free up to 100,000
+ * entries" is a promise, and a promise nobody can check is just a sentence.
+ */
+developers.get('/v1/dev/apps/:slug/usage', requireDeveloper, async (c) => {
+  const app = await ownedApp(c, c.req.param('slug'))
+  if (!app) return c.json({ error: 'unknown app' }, 404)
+  const month = c.req.query('month') ?? now().slice(0, 7)
+  if (!/^\d{4}-\d{2}$/.test(month)) return c.json({ error: 'month must be YYYY-MM' }, 400)
+  return c.json({ app: app.slug, ...(await usageForMonth(c.env.DB, app.id, month)) })
 })
 
 developers.get('/v1/dev/audit', requireDeveloper, async (c) => {

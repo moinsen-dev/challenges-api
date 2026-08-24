@@ -61,6 +61,14 @@ const metered = [
         apps. Until an outside developer actually needs metering, everything is
         free and the roadmap says so openly.
       </p>
+      <p class="small muted">
+        The counting, however, is switched on. Every app owner sees their own
+        month in the console — entries against the allowance, verified runs and
+        the CPU they cost, titles above city level — at
+        <code>GET /v1/dev/apps/:slug/usage</code>. A completed day is written
+        down once and never recomputed, so a month cannot shrink after the fact.
+        A free allowance nobody can check is not a promise, it is a sentence.
+      </p>
     </div>
   </section>
 

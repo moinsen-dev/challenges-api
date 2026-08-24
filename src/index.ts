@@ -3,6 +3,7 @@ import { cors } from 'hono/cors'
 import { Env, HonoApp, audit } from './lib'
 import { sweepRetention } from './retention'
 import { retryDue } from './webhooks'
+import { freezeUsage } from './usage'
 import { admin } from './routes/admin'
 import { identity } from './routes/identity'
 import { compete } from './routes/compete'
@@ -114,11 +115,14 @@ const scheduled: ExportedHandlerScheduledHandler<Env> = async (event, env, ctx) 
       // Deliveries that failed earlier get their next attempt here, so a
       // customer's outage does not turn into lost events.
       const retried = await retryDue(env)
+      // Yesterday's consumption is written down before anything can change it.
+      const usage = await freezeUsage(env.DB)
       await audit(env.DB, { kind: 'system', label: 'cron' }, 'retention.swept', event.cron, {
         ...purged,
         webhooks_retried: retried,
+        usage_days_frozen: usage.days_frozen,
       })
-      console.log('cron', JSON.stringify({ ...purged, webhooks_retried: retried }))
+      console.log('cron', JSON.stringify({ ...purged, webhooks_retried: retried, ...usage }))
     })(),
   )
 }
